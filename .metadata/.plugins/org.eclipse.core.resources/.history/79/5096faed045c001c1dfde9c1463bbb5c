@@ -1,0 +1,390 @@
+package com.hach.salesforce.dao;
+
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.json.JSONObject;
+
+import com.hach.salesforce.utils.common.ApplicationProperties;
+import com.hach.salesforce.utils.common.DatabaseConnector;
+import com.hach.salesforce.utils.common.Utilities;
+import com.hach.salesforce.vo.ChannelDetails;
+import com.hach.salesforce.vo.ContentDetails;
+
+
+public class TransactionDAO extends DatabaseConnector{
+
+private Logger logger = Logger.getLogger(TransactionDAO.class);
+	
+	private String schemaName=ApplicationProperties.getProperty("jdbc.schemaName");
+
+	private String tableNamePlaceholder="TABLE_NAME_PLACEHOLDER";
+	
+	public Connection conn = null;
+
+	
+	/**
+	 * Function will check whether DB Table Exists or not, if not will create table at run time
+	 * @param tableName
+	 * @param tableType
+	 * @return
+	 */
+	public boolean checkTableExists(String tableName, String tableType)
+	{
+		boolean bool = true;
+		Statement stmt = null;
+		ResultSet rs = null;
+		try
+		{
+			if(null!=tableName && !"".equals(tableName))
+			{
+				try
+				{
+					if(null==conn || conn.isClosed()==true)
+					{
+						conn = getConnection();
+					}
+				}
+				catch(Exception eq)
+				{
+					Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "checkTableExists()", eq);
+					bool = false;
+				}
+
+				boolean exists = false;
+				String sql="SELECT table_name FROM information_schema.tables WHERE table_schema = '"+schemaName+"' AND "
+						+ "table_name = '"+tableName+"'";
+				stmt = conn.createStatement();
+				rs=stmt.executeQuery(sql);
+				if(rs.next())
+				{
+					if(null!=rs.getString("table_name") && !"".equals(rs.getString("table_name")))
+					{
+						// table exists
+						exists= true;
+					}
+				}
+				sql = null;
+				stmt.close();stmt=null;
+				rs.close();rs=null;
+
+				if(exists==false)
+				{
+					logger.info("checkTableExists :: "+tableName+" does not exists under Schema :: > "+ schemaName+". Proceed for creating Table.");
+					// read vehicle Table create query
+					InputStream is = null;
+					String query="";
+					try
+					{
+						is = TransactionDAO.class.getResourceAsStream("/com/hach/salesforce/queries/"+tableType+"_TABLE.sql");
+						if(null!=is)
+						{
+							// convert to string
+							query = Utilities.readInputStramToString(is);
+						}
+					}
+					catch(Exception e)
+					{
+						Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "checkTableExists()", e);
+					}
+					finally
+					{
+						if(null!=is)
+						{
+							is.close();
+						}
+					}
+					is = null;
+
+					if(null!=query && !"".equals(query))
+					{
+						query=query.replace(tableNamePlaceholder, tableName);
+						stmt = conn.createStatement();
+						stmt.executeUpdate(query);
+						logger.info("checkTableExists :: "+tableName+" Created Successfully under Schema :: > "+ schemaName+". Proceed for dumping data in Table.");
+					}
+					else
+					{
+						logger.info("checkTableExists :: Failed to Read Create Table query for "+tableType+"_TABLE.sql. Cannot create table.");
+						bool = false;
+					}
+					query = null;
+				}
+				else
+				{
+					logger.info("checkTableExists :: "+tableName+" already exists under Schema :: > "+ schemaName+". Proceed for dumping data in Table.");
+				}
+			}
+			else
+			{
+				logger.info("checkTableExists :: Table Name as parameter is null.");
+				bool = false;
+			}
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "checkTableExists()", e);
+			bool = false;
+		}
+		finally
+		{
+			try
+			{
+				if(null!=stmt)
+					stmt.close();
+				if(null!=rs)
+					rs.close();
+				stmt=null;
+				rs=null;
+			}
+			catch(SQLException e)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "checkTableExists()", e);
+			}
+		}
+		return bool;
+	}
+	
+	public void saveChannelDetails(List<ChannelDetails> channelsList)
+	{
+		PreparedStatement pstmt=null;
+		ResultSet rs = null;
+		try
+		{
+			try
+			{
+				if(null==conn || conn.isClosed()==true)
+				{
+					conn = getConnection();
+				}
+			}
+			catch(Exception eq)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "saveChannelDetails()", eq);
+			}
+			
+			if(null!=conn)
+			{
+				conn.setAutoCommit(false);
+			}
+			
+			ChannelDetails details = null;
+			String sql="INSERT INTO SF_CHANNEL_MASTER(NAME,RECORD_ID,REC_CREATION_TMSTP) VALUES(?,?,?)";
+			pstmt=conn.prepareStatement(sql);
+			for(int a=0;a<channelsList.size();a++)
+			{
+				details = (ChannelDetails)channelsList.get(a);
+				pstmt.setString(1, details.getName());
+				pstmt.setString(2, details.getRecordId());
+				pstmt.setTimestamp(3, new Timestamp(new Date().getTime()));
+
+				pstmt.addBatch();
+				details = null;
+			}
+			pstmt.executeBatch();
+			pstmt.close();pstmt=null;
+			sql = null;
+			
+			if(null!=conn)
+			{
+				conn.commit();
+				conn.setAutoCommit(true);
+			}
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "saveChannelDetails()", e);
+			if(null!=conn)
+			{
+				try
+				{
+					conn.rollback();
+				}
+				catch(SQLException eq)
+				{
+					Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "saveChannelDetails()", eq);
+				}
+			}
+		}
+		finally
+		{
+			try
+			{
+				if(null!=pstmt)
+				{
+					pstmt.close();
+				}
+				if(null!=rs)
+				{
+					rs.close();
+				}
+			}
+			catch(SQLException e)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "saveChannelDetails()", e);
+			}
+			pstmt=null;
+			rs = null;
+			channelsList= null;
+		}
+	}
+
+	public List<String> getIMChannelDetails()
+	{
+		List<String> channelsList = null;
+		PreparedStatement pstmt=null;
+		ResultSet rs = null;
+		try
+		{
+			try
+			{
+				if(null==conn || conn.isClosed()==true)
+				{
+					conn = getConnection();
+				}
+			}
+			catch(Exception eq)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMChannelDetails()", eq);
+			}
+			
+			/*
+			 * FIRST DELETE ALL MASTER DATA FROM CATEGORY MASTER
+			 */
+			String tableName="IM_CHANNEL_MASTER";
+			String sql="SELECT REF_KEY FROM "+ tableName;
+			pstmt =conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			while(rs.next())
+			{
+				if(null!=rs.getString("REF_KEY") && !"".equals(rs.getString("REF_KEY")))
+				{
+					if(null==channelsList || channelsList.size()<=0)
+					{
+						channelsList = new ArrayList<String>();
+					}
+					channelsList.add(rs.getString("REF_KEY"));
+				}
+			}
+			sql  =null;
+			
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMChannelDetails()", e);
+		}
+		finally
+		{
+			try
+			{
+				if(null!=pstmt)
+				{
+					pstmt.close();
+				}
+				if(null!=rs)
+				{
+					rs.close();
+				}
+			}
+			catch(SQLException e)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMChannelDetails()", e);
+			}
+			pstmt=null;
+			rs = null;
+		}
+		return channelsList;
+	}
+
+	public List<ContentDetails> getIMDocumentsListMasterIdentifiers(String channelRefKey, String locale)
+	{
+		List<ContentDetails> documentsList = null;
+		PreparedStatement pstmt=null;
+		ResultSet rs = null;
+		try
+		{
+			try
+			{
+				if(null==conn || conn.isClosed()==true)
+				{
+					conn = getConnection();
+				}
+			}
+			catch(Exception eq)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMDocumentsListMasterIdentifiers()", eq);
+			}
+			
+			/*
+			 * FETCH ALL MASTER IDENTIFIERS FOR THE CHANNEL, E.G. WHERE BASE LOCALE AND DOCUMENT LOCALE IS SAME.
+			 */
+			String tableName="IM_DOCUMENT_"+channelRefKey.trim().toUpperCase();
+			String sql="SELECT id,DOCUMENT_ID,BASE_LOCALE,DOCUMENT_LOCALE,ANSWER_ID FROM "+ tableName +" where DOCUMENT_LOCALE = BASE_LOCALE";
+			pstmt =conn.prepareStatement(sql);
+			rs = pstmt.executeQuery();
+			ContentDetails details = null;
+			while(rs.next())
+			{
+				if(null!=rs.getString("DOCUMENT_ID") && !"".equals(rs.getString("DOCUMENT_ID")) && 
+						null!=rs.getString("DOCUMENT_LOCALE") && !"".equals(rs.getString("DOCUMENT_LOCALE")))
+				{
+					details=  new ContentDetails();
+					details.setAutoId(rs.getLong("ID"));
+					details.setDocumentId(rs.getString("DOCUMENT_ID"));
+					details.setBaseLocale(rs.getString("BASE_LOCALE"));
+					details.setLocale(rs.getString("DOCUMENT_LOCALE"));
+					details.setAnswerId(rs.getString("ANSWER_ID"));
+					
+					if(null==documentsList || documentsList.size()<=0)
+					{
+						documentsList = new ArrayList<ContentDetails>();
+					}
+					documentsList.add(details);
+					details = null;
+				}
+			}
+			sql  =null;
+			tableName= null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMDocumentsListMasterIdentifiers()", e);
+		}
+		finally
+		{
+			try
+			{
+				if(null!=pstmt)
+				{
+					pstmt.close();
+				}
+				if(null!=rs)
+				{
+					rs.close();
+				}
+			}
+			catch(SQLException e)
+			{
+				Utilities.printStackTraceToLogs(TransactionDAO.class.getName(), "getIMDocumentsListMasterIdentifiers()", e);
+			}
+			pstmt=null;
+			rs = null;
+		}
+		return documentsList;
+	}
+
+	public JSONObject getDocumentObject(String channelRefKey)
+	{
+		
+	}
+	
+}

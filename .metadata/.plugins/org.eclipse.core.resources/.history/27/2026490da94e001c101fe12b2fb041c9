@@ -1,0 +1,473 @@
+package com.hach.dataextraction.impl;
+
+import java.io.File;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Entities.EscapeMode;
+import org.jsoup.parser.Parser;
+import org.jsoup.select.Elements;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+
+import com.hach.dataextraction.utils.common.Utilities;
+import com.hach.dataextraction.utils.osvc.OSVCandKAWebServiceCaller;
+import com.hach.dataextraction.vo.AttachmentDetails;
+import com.hach.dataextraction.vo.AttachmentTypes;
+import com.hach.dataextraction.vo.CategoryDetails;
+import com.hach.dataextraction.vo.ContentDetails;
+
+public class StartExtractionImpl {
+
+	private Logger logger = Logger.getLogger(StartExtractionImpl.class);
+	
+	public static void main(String[] args) {
+		// initialize loggers
+		File f = new File(StartExtractionImpl.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+		PropertyConfigurator.configure(f.getParentFile().getAbsolutePath()+"/log.properties");
+		f=  null;
+		try
+		{
+//			StartExtractionImpl impl = new StartExtractionImpl();
+			
+			String xmlData="<COMMERCIAL_QA><QUESTION><![CDATA[Product Hierarchy Reference Library]]></QUESTION><SUMMARY><![CDATA[<br /> &nbsp;]]></SUMMARY><ANSWER><![CDATA[<strong><span style=\"color:rgb(255, 0, 0)\">INTERNAL/AUTHORIZED SERVICE PROVIDER INFORMATION DO NOT FORWARD TO CUSTOMER</span></strong> <h3><br /> Product Hierarchy Reference:</h3> <br /> See Excel report: <strong>Product Hierarchy Reference</strong> (attached below, Version uploaded&nbsp;14 Aug 2020). This report is updated on a bi-weekly basis.<br /> <a href=\"http://ewqlovtsqldw01/Reports/powerbi/Power%20BI%20Development/Product%20Hierarchy%20Reference\">Or access report here</a>&nbsp;(Does require VPN and Access permissions): Contact <a href=\"mailto:benjamin.seidle@hach.com?subject=Product%20Hierarchy%20Reference%20Report%20Permission\">Benjamin Seidle </a>for permissions.<br /> &nbsp; <h3>Global Product Hierarchy Tools:</h3> <br /> Attached are several tools to be used with the Global Product Hierarchy including: <ul> <li>Training</li> <li>Change Request Form</li> <li>Email Templates for communication</li> <li>RACI Minor Code Assignment</li> <li>Local PM Coordinators</li> <li>Summary of the current Global Product Hierarchy PM-LCPM Assignments</li> <li>Item to Minor SOP</li> <li>Summary of Item Types</li> </ul> <h3><br /> Need to add a new group, major, or minor?</h3> <br /> To add new groups, majors, or minors, please click this link to access the update file (Requires VPN Access):<br /> <a href=\"http://sp.hach.ewqg.com/sites/GSR/Product%20Hierarchy%20Documents/Product%20Hierarchy%20Change%20Request.xlsx\">http://sp.hach.ewqg.com/sites/GSR/Product%20Hierarchy%20Documents/Product%20Hierarchy%20Change%20Request.xlsx</a><br /> <br /> &nbsp;]]></ANSWER><ATTACHMENTS><ATTACHMENT SIZE=\"464768\"><![CDATA[Product Hierarchy Reference.xlsx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"244552\"><![CDATA[Global Product Hierarchy - Training and Change Control Procedures.pptx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"28531\"><![CDATA[Email Templates for Communication of New or Reassigned Minor Codes.docx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"29030\"><![CDATA[RACI_Minor Code Assignment for Global Reporting.xlsx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"21671\"><![CDATA[Local PM Coordinators.xlsx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"1398548\"><![CDATA[Summary of Current Global Product Hierarchy PM-LCPM Assignments (1).xlsx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"2334498\"><![CDATA[Item to Minor Assignment SOP 2019.docx]]></ATTACHMENT></ATTACHMENTS><ATTACHMENTS><ATTACHMENT SIZE=\"103306\"><![CDATA[Summary of Item Types.xlsx]]></ATTACHMENT></ATTACHMENTS></COMMERCIAL_QA>";
+			
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "main()", e);
+		}
+	}
+
+	
+	private void startExecution(String channelRefKey)
+	{
+		try
+		{
+			List<ContentDetails> documentsList = getAllDocIDs("TECHNICAL_QA");
+			if(null!=documentsList && documentsList.size()>0)
+			{
+				ContentDetails contentDetails = null;
+				
+			}
+			else
+			{
+				logger.info("startExecution :: No Documents Found. Exiting.");
+			}
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "startExecution()", e);
+		}
+	}
+	
+	private List<ContentDetails> getAllDocIDs(String channelRefKey)
+	{
+		List<ContentDetails> documentsList = new ArrayList<ContentDetails>();
+		try
+		{
+			boolean hasMore = true;
+			int limit = 1000;
+			int offset = 0;
+			OSVCandKAWebServiceCaller caller = new OSVCandKAWebServiceCaller();
+			JSONObject content = null;
+			JSONArray items = null;
+			JSONObject item = null;
+			ContentDetails contentDetails = null;
+			while (hasMore)
+			{
+				try
+				{
+					content = caller.callKAWebservice("/content?q=contentType.referenceKey eq '"+channelRefKey+"'&limit=" + limit + "&offset=" + offset);
+					// increase offset value
+					offset += limit;
+					if(null!=content)
+					{
+						hasMore = content.getBoolean("hasMore");
+						// check for items
+						items = content.getJSONArray("items");
+						if(null!=items && items.length()>0)
+						{
+							contentDetails = new ContentDetails();
+							// iterate each item and get the content specific details for the channel
+							for (int i = 0; i < items.length(); i++)
+							{
+								item = items.getJSONObject(i);
+								try
+								{
+									// recordId
+									contentDetails.setRecordId(item.getString("recordId"));
+								}
+								catch(Exception e) {}
+								try
+								{
+									// versionId
+									contentDetails.setVersionId(item.getString("versionId"));
+								}
+								catch(Exception e) {}
+								try
+								{
+									// documentId
+									contentDetails.setDocumentId(item.getString("documentId"));
+								}
+								catch(Exception e) {}
+								try
+								{
+									// title
+									contentDetails.setTitle(item.getString("title"));
+								}
+								catch(Exception e) {}
+								try
+								{
+									// version
+									contentDetails.setVersionNumber(item.getString("version"));
+								}
+								catch(Exception e) {}
+								try
+								{
+									// answerId
+									contentDetails.setAnswerId(item.get("answerId").toString());
+								}
+								catch(Exception e) {}
+								try
+								{
+									// locale
+									if(null!=item.getJSONObject("locale"))
+									{
+										contentDetails.setLocale(item.getJSONObject("locale").getString("recordId"));
+									}
+								}
+								catch(Exception e) {}
+								
+								item = null;
+								// if contentDetails recordId is not null = add to vector
+								if(null!=contentDetails && null!=contentDetails.getRecordId() && !"".equals(contentDetails.getRecordId()))
+								{
+									/*
+									 * CALL FUNCTION TO FETCH COMPLETE DOCUMENT DETAILS
+									 */
+									
+									
+									
+									if(null==documentsList || documentsList.size()<=0)
+									{
+										documentsList = new ArrayList<ContentDetails>();
+									}
+									documentsList.add(contentDetails);
+								}
+								contentDetails = null;
+							}
+						}
+						items=null;
+
+						System.out.println(documentsList.size() + " items found so far.");
+					}
+					content=null;
+				}
+				catch (Exception e)
+				{
+					Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "getAllDocIDs()", e);
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "getAllDocIDs()", e);
+		}
+		if(null!=documentsList && documentsList.size()>0)
+		{
+			logger.info("getAllDocIDs :: Total Documents Found are :: >"+ documentsList.size()+". For Channel :: >"+ channelRefKey);
+		}
+		else
+		{
+			logger.info("getAllDocIDs :: No Documents Found for Channel :: >"+ channelRefKey);
+		}
+		return documentsList;
+	}
+
+	
+	private ContentDetails getContentData(String recordId, OSVCandKAWebServiceCaller caller, ContentDetails contentDetails)
+	{
+		JSONObject contentObj = null;
+		try
+		{
+			contentObj = caller.callKAWebservice("/content/"+recordId);
+			if(null!=contentObj)
+			{
+				// set COMPLETE CONTENT OBJ IN CONTENT DETAILS
+				contentDetails.setContentObject(contentObj);
+				
+				// CHEKC FOR RESOURCE PATH
+				try
+				{
+					if(null!=contentObj.getString("resourcePath"))
+					{
+						contentDetails.setResourcePath(contentObj.getString("resourcePath"));
+					}
+				}catch(Exception e) {};
+				
+				// CHECK FOR CATEGORIES
+				if(null!=contentObj.getJSONArray("categories") && contentObj.getJSONArray("categories").length()>0)
+				{
+					JSONObject catObj = null;
+					CategoryDetails catDetail = null;
+					for(int a=0;a<contentObj.getJSONArray("categories").length();a++)
+					{
+						try
+						{
+							catObj = contentObj.getJSONArray("categories").getJSONObject(a);
+							if(null!=catObj)
+							{
+								catDetail =new CategoryDetails();
+								try
+								{
+									// referenceKey
+									catDetail.setRefKey(catObj.getString("referenceKey"));
+								}catch(Exception e) {};
+								
+								try
+								{
+									// recordId
+									catDetail.setRecordId(catObj.getString("recordId"));
+								}catch(Exception e) {};
+								
+								try
+								{
+									// name
+									catDetail.setName(catObj.getString("name"));
+								}catch(Exception e) {};
+								
+								try
+								{
+									// externalType
+									catDetail.setExternalType(catObj.getString("externalType"));
+								}catch(Exception e) {};
+								
+								if(null!=catDetail.getRefKey() && !"".equals(catDetail.getRefKey()))
+								{
+									// add to categoryList
+									if(null==contentDetails.getCategoryList() || contentDetails.getCategoryList().size()<=0)
+									{
+										contentDetails.setCategoryList(new ArrayList<CategoryDetails>());
+									}
+									contentDetails.getCategoryList().add(catDetail);
+								}
+								
+								catDetail = null;
+							}
+							catObj = null;
+						}catch(Exception e) {};
+					}
+				}
+				
+				// SET XML NODE
+				try
+				{
+					contentDetails.setSchemaData(contentObj.getString("xml"));
+				}catch(Exception e) {}
+				
+				
+				// CHECK FOR ATTACHMENTS
+				if(null!=contentDetails.getSchemaData() && !"".equals(contentDetails.getSchemaData()))
+				{
+					// GET INLINE IMAGES AS ATTACHMENTS DATA
+					// GET INLINE PDFS / WORD / DOCUMENTS / VIDEOS
+					try
+					{
+						AttachmentDetails aDetails = null;
+						DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+						DocumentBuilder builder = factory.newDocumentBuilder();
+						Document doc = builder.parse(new InputSource(new StringReader(contentDetails.getSchemaData())));
+						if(null!=doc)
+						{
+							NodeList attachmentList = doc.getElementsByTagName("ATTACHMENTS");
+							if(null!=attachmentList && attachmentList.getLength()>0)
+							{
+								Node attachmentNode = attachmentList.item(0);
+								if(null!=attachmentNode)
+								{
+									NodeList childNodesList = attachmentNode.getChildNodes();
+									if(null!=childNodesList && childNodesList.getLength()>0)
+									{
+										Node childNode=null;
+										for(int b=0;b<childNodesList.getLength();b++)
+										{
+											childNode = (Node)childNodesList.item(b);
+											if(childNode.getNodeName().equals("ATTACHMENT"))
+											{
+												// SET ATTACHMENT DATA FOR DOCUMENT
+												aDetails = new AttachmentDetails();
+												aDetails.setAttachmentName(Utilities.readNodeValue(childNode));
+												if(null!=aDetails.getAttachmentName() && !"".equals(aDetails.getAttachmentName()))
+												{
+													// prepare Other details
+													aDetails.setAttachmentType(AttachmentTypes.ATT_TYPE_DOCUMENT_ATTACHMENT);
+													aDetails.setKaResourcePath(contentDetails.getResourcePath());
+													if(null!=aDetails.getKaResourcePath() && !aDetails.getKaResourcePath().endsWith("/"))
+													{
+														aDetails.setKaResourcePath(aDetails.getKaResourcePath()+"/");
+													}
+													aDetails.setKaResourcePath(aDetails.getKaResourcePath()+aDetails.getAttachmentName());
+													// add to contentDetails.AttachmentList
+													if(null==contentDetails.getAttachmentsList() || contentDetails.getAttachmentsList().size()<=0)
+													{
+														contentDetails.setAttachmentsList(new ArrayList<AttachmentDetails>());
+													}
+													contentDetails.getAttachmentsList().add(aDetails);
+												}
+												aDetails = null;
+											}
+											childNode = null;
+										}
+									}
+									childNodesList = null;
+								}
+								attachmentNode = null;
+							}
+							attachmentList = null;
+						}
+						builder = null;
+						factory =null;
+						doc=null;
+					}
+					catch(Exception e)
+					{
+						Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "getContentData()", e);
+					}
+					
+					// PROCEED FOR INLINE IMAGES AND INLINE LINKS
+				}
+			}
+			contentObj = null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "getContentData()", e);
+		}
+		return contentDetails;
+	}
+	
+	private ContentDetails readInlineImagesAndInnerLinks(ContentDetails contentDetails)
+	{
+		try
+		{
+			org.jsoup.nodes.Document doc = Jsoup.parse(contentDetails.getSchemaData(), "", Parser.xmlParser());
+			if(null!=doc)
+			{
+				Element channelNode = doc.child(0);
+				Elements allNodesList = channelNode.getAllElements();
+				if(null!=allNodesList && allNodesList.size()>0)
+				{
+					AttachmentDetails aDetails = null;
+					Element node = null;
+					String textContent=null;
+					org.jsoup.nodes.Document htmlDoc= null;
+					Elements aTagsList=null;
+					String hrefSrcVal=null;
+					Element aEle=null;
+					Elements imagesList = null;
+					Element imgEle=null;
+					for(int a=0;a<allNodesList.size();a++)
+					{
+						node = (Element)allNodesList.get(a);
+						if(null!=node.nodeName() && !node.nodeName().toLowerCase().equals("ATTACHMENTS".toLowerCase()) && !node.nodeName().toLowerCase().equals("ATTACHMENT".toLowerCase()))
+						{
+							textContent = node.ownText();
+							if(null!=textContent && !"".equals(textContent))
+							{
+								// convert this to HTML DOC
+								htmlDoc = Jsoup.parse(textContent);
+								if(null!=htmlDoc)
+								{
+									// ANCHOR TAGS
+									aTagsList = htmlDoc.select("a");
+									if(null!=aTagsList && aTagsList.size()>0)
+									{
+										for(int c=0;c<aTagsList.size();c++)
+										{
+											aEle = (Element)aTagsList.get(c);
+											hrefSrcVal = aEle.attr("href");
+											if(null!=hrefSrcVal && !"".equals(hrefSrcVal) && !"#".equals(hrefSrcVal))
+											{
+												hrefSrcVal= hrefSrcVal.replace("\\", "/");
+												// add this as attachment
+												aDetails=  new AttachmentDetails();
+												if(hrefSrcVal.lastIndexOf("/")!=-1)
+												{
+													aDetails.setAttachmentName(hrefSrcVal.substring(hrefSrcVal.lastIndexOf("/")+1,hrefSrcVal.length()));
+												}
+
+												// prepare Other details
+												aDetails.setAttachmentType(AttachmentTypes.ATT_TYPE_DOCUMENT_ATTACHMENT);
+												aDetails.setKaResourcePath(contentDetails.getResourcePath());
+												if(null!=aDetails.getKaResourcePath() && !aDetails.getKaResourcePath().endsWith("/"))
+												{
+													aDetails.setKaResourcePath(aDetails.getKaResourcePath()+"/");
+												}
+												aDetails.setKaResourcePath(aDetails.getKaResourcePath()+aDetails.getAttachmentName());
+												// add to contentDetails.AttachmentList
+												if(null==contentDetails.getAttachmentsList() || contentDetails.getAttachmentsList().size()<=0)
+												{
+													contentDetails.setAttachmentsList(new ArrayList<AttachmentDetails>());
+												}
+												contentDetails.getAttachmentsList().add(aDetails);
+											
+											}
+											aEle= null;
+											hrefSrcVal = null;
+										}
+									}
+									aTagsList = null;
+									
+									// IMAGES TAGS
+									imagesList = htmlDoc.select("a");
+									if(null!=imagesList && imagesList.size()>0)
+									{
+										for(int c=0;c<imagesList.size();c++)
+										{
+											imgEle = (Element)imagesList.get(c);
+											hrefSrcVal = imgEle.attr("src");
+											if(null!=hrefSrcVal && !"".equals(hrefSrcVal) && !"#".equals(hrefSrcVal))
+											{
+												hrefSrcVal= hrefSrcVal.replace("\\", "/");
+												// add this as attachment
+											}
+											imgEle= null;
+											hrefSrcVal = null;
+										}
+									}
+									imagesList = null;
+								}
+								htmlDoc =  null;
+							}
+							textContent=null;
+						}
+						node = null;
+					}
+				}
+				allNodesList = null;
+				channelNode = null;
+			}
+			doc = null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartExtractionImpl.class.getName(), "getContentData()", e);
+		}
+		return contentDetails;
+	}
+}

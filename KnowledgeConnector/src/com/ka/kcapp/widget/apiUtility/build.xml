@@ -1,0 +1,20 @@
+<project name="KCApiUtility" default="dist">
+    <property name="KC.root.dir"        location="../../../../../../"/>
+    <import file="KCApiUtility.dependencies.xml"/>
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${KC.root.dir}/WebContent/WEB-INF/lib/ant-contrib-1.0b2.jar"/>
+        </classpath>
+    </taskdef>
+    
+    <target name="KCApiUtility.buildJar">
+        <javac srcdir="." destdir="${KC.root.dir}/bin" classpathref="KCApiUtility.build.dependencies" debug="${debug}" debuglevel="${debugLevel}"/>
+    </target>
+    
+    <target name="dist">
+        <antcall target="KCApiUtility.buildJar">
+            <param name="debug" value="${debug}"/>
+            <param name="debugLevel" value="${debugLevel}"/>
+        </antcall>
+    </target>
+</project>

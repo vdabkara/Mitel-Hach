@@ -1,0 +1,4 @@
+0 users are not in KA
+374 successful extractions
+1 failed extractions
+375 total records found from OSvC webservice call

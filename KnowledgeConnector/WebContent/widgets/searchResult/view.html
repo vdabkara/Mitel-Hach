@@ -1,0 +1,82 @@
+<!--
+ Copyright (c) 2015, Oracle Corporation and/or its affiliates. All rights reserved.
+
+ The sample code in this document or accessed through this document is not certified or
+ supported by Oracle. It is intended for educational or testing purposes only. Use of this
+ sample code implies acceptance of the License Agreement
+ (http://www.oracle.com/technetwork/licenses/standard-license-152015.html).
+
+ File: view.html
+ Abstract: Partial Page to render search result Items
+ Version: 1.0
+-->
+ 
+<div class="SearchResultTitle">
+	<div class="SearchResultTitleAnswer"><%= title %></div>
+</div>
+<table>
+		<% for (var i = 0; i < data.length; i++) { %>
+				<tr>
+					<td class="SearchResultAnswer">
+						<div class="Element1">
+							<% if (showCaseLinks) { %>
+								<% if (linkedAnswers.includes(parseInt(data[i].globalAnswerId))) {%>
+									<span data-id="<%= data[i].globalAnswerId %>" class="linkedAnswer"></span>
+								<% } else if (linkedAnswers.includes(parseInt(data[i].docId))) { %>
+									<span id="<%= data[i].docId %>" class="linkedAnswer"></span>
+								<% } else {%>
+									<span class="unlinkedAnswerIndent"></span>
+								<% } %>
+								<div class="answerTitle">
+							<% } %>
+							<% var fileType = data[i].fileType, type = data[i].type, typeOfFile; 
+							if(fileType) {
+								typeOfFile = fileType.toLowerCase().replace('-', '_');
+							} 
+							else if(type === 'template') {
+								typeOfFile = 'intent'; 
+							} %>
+							<span class="SearchResultIcon File_<%= typeOfFile %>">
+							</span>
+							<a id="<%= data[i].answerId %>" data-id="<%= data[i].docId %>" href="<%= data[i].href %>" target="<%= target %>">
+								<%= data[i].title %>
+							</a>
+							<% if (showCaseLinks) { %>
+								</div>
+								<% if (typeOfFile === 'cms_xml' && showAddText) { %>
+									<button data-id="<%= data[i].globalAnswerId %>" class="addText"></button>
+								<% } %>
+								<% if (showAddLink) { %>
+									<% if (data[i].globalAnswerId != null) { %>
+										<button data-id="<%= data[i].globalAnswerId %>" class="addLink"></button>
+									<% } else { %>
+										<button id="<%= data[i].docId %>" data-href="<%= data[i].href %>" class="addLink"></button>
+									<% } %>
+								<% } %>
+							<% } %>
+						</div>
+						<% if(data[i].textElements && data[i].textElements.length > 0) { %>
+							<% if (typeOfFile === 'intent') { %>
+								<div class="SearchResultExcerpt Intent">
+							<% } else {%>
+								<div class="SearchResultExcerpt">
+							<% } %>
+							<% if (showCaseLinks) { %>
+								<span class="unlinkedAnswerIndent"></span>
+								<div class="SearchExcerptText">
+							<% } %>
+							<% for (var j = 0; j < data[i].textElements.length; j++) { %>
+								<% for (var k = 0; k < data[i].textElements[j].snippets.length; k++) {
+									searchExcerpt = data[i].textElements[j].snippets[k].text; %>
+									<span class="SnippetLevel<%= data[i].textElements[j].snippets[k].level %>"><%= searchExcerpt %></span>
+								<% } %>
+							<% } %>
+							<% if (showCaseLinks) { %>
+								</div>
+							<% } %>
+							</div>
+						<% } %>
+					</td>
+				</tr>
+		<% } %>
+</table>

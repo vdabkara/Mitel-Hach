@@ -1,0 +1,1402 @@
+/**
+ * Copyright (c) 2015, Oracle Corporation and/or its affiliates. All rights reserved.
+ *
+ * The sample code in this document or accessed through this document is not certified or
+ * supported by Oracle. It is intended for educational or testing purposes only. Use of this
+ * sample code implies acceptance of the License Agreement
+ * (http://www.oracle.com/technetwork/licenses/standard-license-152015.html).
+ *
+ * File: base.css
+ * Abstract: Main CSS file to render HTML styles for the pages
+ * Version: 1.0
+ */
+body {
+    color: #333;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1em;
+    -webkit-font-smoothing: antialiased;
+	margin: 0;
+	line-height: 1.5em;
+}
+
+html, body { height: 100%; }
+
+a {
+    color: #3b6db1;
+    text-decoration: none;
+    transition: color 0.1s linear 0s;
+}
+
+ul, ol {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+table { border-collapse: collapse; }
+
+tr, td, th { vertical-align: middle; }
+
+td {
+    border-bottom: 1px solid #999;
+    padding: 0.75em 0;
+}
+
+.Facet .FacetLink {
+     cursor: pointer;
+     display: block;
+     font-weight: lighter;
+     padding: 3px;
+     text-decoration: none;
+}
+
+.CategoryExplorerExpanded {
+    display: inline-block;
+    font-family: "FontAwesome";
+    margin-right: 3px;
+}
+.CategoryExplorerExpanded:before {
+    content: "\f146";
+    font-family: "FontAwesome";
+    margin-right: 6px;
+}
+.CategoryExplorerCollapsed {
+    display: inline-block;
+    font-family: "FontAwesome";
+    margin-right: 3px;
+}
+.CategoryExplorerCollapsed:before {
+    content: "\f0fe";
+    font-family: "FontAwesome";
+    margin-right: 6px;
+}
+
+.FacetTreeIndent { padding-left: 8px; }
+
+.loginButton {
+    font-size: large;
+    float:right;
+    margin-left: 100%;
+    cursor:pointer;
+    margin-bottom: 1em;
+}
+
+.ScreenReaderOnly {
+    position: absolute;
+    height: 1px;
+    left: -10000px;
+    overflow: hidden;
+    top: auto;
+    width: 1px;
+}
+
+.PaginationLinks {
+    text-align: right;
+}
+
+.PreviousPage::before {
+     content: "\f053";
+     font-family: "FontAwesome";
+     margin-right: 6px;
+}
+
+.NextPage, .PreviousPage {
+    color: #3B6DB1;
+    font-size: 0.8em;
+    cursor: pointer;
+    display: inline;
+}
+.NextPage { margin-left: 0.7em; }
+
+.NextPage::after {
+     content: "\f054";
+     font-family: "FontAwesome";
+     margin-left: 6px;
+}
+
+.NextPage span, .PreviousPage span {
+    font-size: 1.2em;
+}
+
+.SearchResult .SearchResultIcon {
+     display: inline-block;
+     height: 16px;
+     overflow: hidden;
+     vertical-align: middle;
+     width: 16px;
+}
+
+.SearchResult .SearchResultIcon::before {
+     content: url("../images/searchResultSprite.png");
+     position: relative;
+}
+
+.SearchResult .File_xls::before {
+     top: -239px;
+}
+
+.SearchResult .File_intent::before {
+     top: -269px;
+}
+
+.SearchResult .File_document_plain_green::before {
+     top: 0px;
+}
+
+.SearchResult .File_cms_xml::before {
+     top: -16px;
+}
+
+.SearchResult .File_doc::before {
+     top: -32px;
+}
+
+.SearchResult .File_html::before {
+     top: -49px;
+}
+
+.SearchResult .File_image::before {
+     top: -66px;
+}
+
+.SearchResult .File_iqxml::before {
+     top: -82px;
+}
+
+.SearchResult .File_ms_excel::before {
+     top: -98px;
+}
+
+.SearchResult .File_ms_powerpoint::before {
+     top: -113px;
+}
+
+.SearchResult .File_ms_word::before {
+     top: -129px;
+}
+
+.SearchResult .File_news::before {
+     top: -145px;
+}
+
+.SearchResult .File_null::before {
+     top: -161px;
+}
+
+.SearchResult .File_pdf::before {
+     top: -177px;
+}
+
+.SearchResult .File_rtf::before {
+     top: -192px;
+}
+
+.SearchResult .File_table::before {
+     height: 15px;
+     top: -209px;
+     width: 18px;
+}
+
+.SearchResult .File_text::before {
+     top: -224px;
+}
+
+.SearchResult .File_message::before {
+     top: -284px;
+}
+
+.SearchResult .File_messages::before {
+     top: -300px;
+}
+
+.SearchResult .File_trail_arrow::before {
+     height: 9px;
+     top: -314px;
+     width: 9px;
+}
+
+.SearchResult .File_wizard_marker::before {
+     height: 19px;
+     top: -325px;
+     width: 20px;
+}
+
+.SearchResult .File_wizard_marker_rtl::before {
+     height: 19px;
+     top: -345px;
+     width: 20px;
+}
+
+.SearchResult .File_xml::before {
+     top: -254px;
+}
+
+.SearchResult .SearchResultExcerpt {
+     margin-top: 5px;
+     word-wrap: break-word;
+}
+
+.SearchResult .SnippetLevel1 {
+     background-color: #ebeff5;
+     font-weight: normal;
+}
+
+.SearchResult .SnippetLevel2 {
+     background-color: #ebeff5;
+     font-weight: bold;
+}
+
+.SearchResult .SnippetLevel3 {
+     background-color: #ebeff5;
+     font-weight: bold;
+}
+
+.SearchResult .SearchResultTitle {
+     background: #536a8b none repeat scroll 0% 0%;
+     font-weight: normal;
+     text-align: center;
+}
+
+.SearchResult .SearchResultTitleAnswer {
+     background: #536a8b none repeat scroll 0% 0%;
+     border: 1px solid #ccc;
+     color: #fff;
+     padding: 7px;
+}
+
+.SearchResult .SearchResultAnswer {
+     padding: 10px ! important;
+     width: auto;
+     word-wrap: break-word;
+}
+
+.SearchResult tr:nth-child(2n) {
+     background-color: #f7f7f7;
+}
+
+.SearchText {
+     margin-left: auto;
+     margin-right: auto;
+     max-width: 68em;
+}
+
+.ResultList {
+	margin-left: auto;
+    margin-right: auto;
+    max-width: 70%;
+}
+
+@media screen and (max-width: 1500px) {
+	.ResultList{
+    	max-width: 80%;
+	}
+}
+
+@media screen and (max-width: 1000px) {
+	.ResultList{
+    	max-width: 90%;
+	}
+}
+
+@media screen and (max-width: 700px) {
+	.ResultList{
+    	max-width: 100%;
+	}
+}
+
+.LeftContainer {
+    display: inline-block;
+    width: 30%;
+    margin-top: 1em;
+}
+
+.AnswerTitle .AnswerHeader{
+	line-height:2em;
+}
+
+.AnswerStatus .AnswerInfo {
+     display: inline !important;
+}
+
+@media screen and (max-width: 600px) {
+	.AnswerStatus .AnswerInfo {
+    	display: table !important;
+    	width: 100%;
+	}
+}
+
+.RightContainer {
+    clear: both;
+    display: inline-block;
+    float: right;
+    width: 69%;
+    margin-top: 1em;
+    margin-bottom: 30px;
+}
+
+.AnswerView {
+     margin: 0px 0.75em;
+}
+
+.AnswerPreview .PageTitle .AnswerDetail {
+     line-height: 1.2em;
+     padding: 16px 0px 5px;
+}
+
+.AnswerPreview .AnswerInfo {
+     color: #666666;
+     margin: 6px 0px 20px;
+}
+
+.AnswerPreview .AnswerInfo div {
+     display: inline;
+}
+
+.AnswerInfo {
+     color: #666666;
+     margin: 6px 0px 20px;
+}
+
+.AnswerField {
+     display: inline;
+}
+
+@media screen and (max-width: 600px) {
+	.AnswerField {
+    	display: table !important;
+    	width: 100%;
+	}
+}
+
+.AnswerField .SchemaAttribute {
+     font-weight: bold;
+     margin-bottom: 5px;
+}
+
+.AnswerField .SchemaAttributeValue {
+     margin-bottom: 10px;
+}
+
+.AnswerField .SchemaAttribute input {
+     float: left;
+     margin-right: 5px;
+     vertical-align: middle;
+}
+
+.AnswerField section {
+     display: inline-block;
+     padding: 3px;
+     width: 40%;
+     word-wrap: break-word;
+}
+
+@media screen and (max-width: 600px) {
+	.AnswerField section {
+    	width: 100%;
+	}
+}
+
+.AnswerField .Info {
+     display: inline-block;
+     margin-top: 10px;
+     width: auto;
+}
+
+.Bold {font-weight: bold;}
+
+.SectionTitle {
+    border-top: 2px dashed #b7cce7;
+    padding-top: 1.5em;
+}
+
+.AnswerContent .Indent {
+     margin-left: 20px;
+}
+
+.AnswerContent .ExternalContent {
+     padding-top: 16px;
+     width: 100%;
+}
+
+.AnswerContent iframe {
+     min-height: 650px;
+}
+
+.AnswerContent .normal {
+     font-weight: normal;
+}
+
+.AnswerContent .ok-highlight-title {
+     background-color: #ffff00;
+     font-weight: bold;
+}
+
+.AnswerContent .ok-highlight-sentence {
+     background-color: #d6dae0;
+}
+
+.SchemaAttributeValue ul, .SchemaAttributeValue ol {
+     padding: 5px 0px 5px 35px;
+}
+
+.SchemaAttributeValue ul li {
+     list-style: outside none disc;
+}
+
+.Facet .ClearContainer {
+     margin-left: 3px;
+}
+
+.Facet .ClearFacets {
+     color: #0000cc;
+     font-weight: normal;
+}
+
+.Facet .ClearFacets:hover {
+     cursor: pointer;
+     text-decoration: underline;
+}
+
+.Facet .Content ul li {
+     font-weight: bold;
+     list-style-type: none;
+     padding-left: 13px;
+}
+
+.Facet .Content table {
+     border-spacing: 0px;
+     margin-left: 10px;
+}
+
+.Facet .FacetsTitle {
+    background: #536a8b;
+    color: #FFF;
+    font-weight: normal;
+    border: 1px solid #CCC;
+    border-bottom: 0;
+    padding: 7px;
+}
+
+.Facet .FacetsTitle a {
+     color: #ffffff;
+}
+
+.Facet .FacetsList {
+     border: 1px solid #bebebe;
+     overflow: auto;
+     padding: 10px;
+}
+
+.Facet .ActiveFacet {
+     background: #ebeff5 none repeat scroll 0% 0%;
+     border: 1px solid #ccc;
+     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+     font-size: 1em;
+}
+
+.Facet .ActiveFacet::after {
+     content: "\f057";
+     font-family: "FontAwesome";
+     margin-left: 6px;
+}
+
+.Facet .ActiveFacet::after {
+     float: right;
+}
+
+.Hero {    
+    background: #40526b ; 
+    color: #FFF;
+    background-position: left top;
+    padding: 1em 0;
+    text-shadow: #000 0 1px;
+    height: 5em; 
+}
+
+.Hero .HeroInner {
+    max-width: 68em;
+    margin-left: auto;
+    margin-right: auto;
+    margin: auto;
+}
+
+@media screen and (max-width: 400px) {
+  .HeroInner .SearchControls { float: left; display: block; margin-right: 2.35765%; width: 100%; }
+  .HeroInner .SearchControls:last-child { margin-right: 0px; }
+}
+
+.HeroInner .SearchControls::before, .HeroInner .SearchControls::after {
+     content: " ";
+     display: table;
+     width:114%;
+}
+
+.ok-highlight-sentence {
+    background-color: #d6dae0;
+}
+
+.HeroInner .SearchControls::after {
+     clear: both;
+}
+
+.SearchControls .SearchInput {
+     display: block;
+     float: left;
+     margin-right: 2.35765%;
+     width: 91.4702%;
+}
+
+.SearchControls .SearchInput:last-child {
+     margin-right: 0px;
+}
+
+@media screen and (max-width: 720px) {
+  .SearchControls .SearchInput { float: left; display: block; margin-right: 2.35765%; width: 82.9404%; }
+  .SearchControls .SearchInput:last-child { margin-right: 0px; }
+}
+
+.SearchButton {
+     display: block;
+     float: left;
+     margin-right: 2.35765%;
+     text-align: right;
+     width: 6.17215%;
+}
+
+.SearchButton:last-child {
+     margin-right: 0px;
+}
+
+@media screen and (max-width: 720px) {
+  .SearchButton { float: left; display: block; margin-right: 2.35765%; width: 14.702%; }
+  .SearchButton:last-child { margin-right: 0px; }
+}
+
+.SearchButton .SubmitButton {
+     font-weight: bold;
+     padding: 0.5em 0px;
+     width: 100%;
+     cursor: pointer;
+     margin-top: 0;
+}
+
+.SearchButton .SubmitButton:after {
+     font-family: "FontAwesome";
+     content: "\f002";
+     margin: 0;
+}
+
+.SearchField label {
+     height: 1px;
+     left: -10000px;
+     overflow: hidden;
+     position: absolute;
+     top: auto;
+     width: 1px;
+}
+
+.SearchButton .ButtonText, .SearchField label {
+     height: 1px;
+     left: -10000px;
+     overflow: hidden;
+     position: absolute;
+     top: auto;
+     width: 1px;
+}
+
+.errorMsg {
+    display: inline-block;
+    float: left;
+    margin-right: 9%;
+}
+
+.StartOver {
+    float: right;
+}
+
+.StartOver a {
+    color: #FFF;
+}
+.ContributeContent {
+    float: left;
+}
+
+.ContributeContent a {
+    color: #FFF;
+}
+.SearchResult {
+     padding: 0px;
+}
+
+.SearchResult .NoSearchResultMsg {
+     padding: 10px;
+}
+
+.SearchResult .NoSearchResult p {
+     background-color: #f2f2f2;
+     border: 1px solid #a1a5a9;
+     padding: 10px;
+}
+
+p{
+	margin: 0 0 0.75em;
+}
+
+.Hidden {
+    display: none !important;
+}
+
+.SearchResult .SearchResultContent table {
+     -moz-border-bottom-colors: none;
+     -moz-border-left-colors: none;
+     -moz-border-right-colors: none;
+     -moz-border-top-colors: none;
+     border-color: -moz-use-text-color #cccccc #cccccc;
+     border-image: none;
+     border-spacing: 0px;
+     border-style: none solid solid;
+     border-width: 0px 1px 1px;
+     margin: 0px;
+     width: 100%;
+}
+
+.SearchResult .SearchResultContent span {
+     word-break: break-word;
+}
+
+.SearchResult .SearchResultContent a {
+     text-decoration: none;
+     display: inline;
+}
+
+.SearchResultContent table {
+     display: block;
+}
+
+.SearchResultContent table tbody {
+     display: block;
+}
+
+.SearchResultContent table tbody tr {
+     display: inherit;
+}
+
+.SearchResultContent table tbody tr td {
+     display: block;
+}
+
+input[type="search"] {
+	-webkit-appearance: none;
+    box-sizing: border-box;
+    transition: border-color;
+    background-color: white;
+    border-radius: 0.1875em;
+    border: 1px solid #999;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1em;
+    margin-bottom: 0.75em;
+    padding: 0.5em 0.5em;
+    width: 100%;
+}
+
+
+.SearchButton {
+    margin-right: 0;
+}
+button, input[type="submit"] {
+    -webkit-transition: all 0.2s ease-in-out;
+    -moz-transition: all 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+    background: #3873c4;
+    border-radius: 0.1875em;
+    color: #fff;
+    font-size: 1em;
+    padding: 0.5em 1em;
+    border: 0;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+}
+
+.loginFormSubmitButton, .cancelLogin {
+	margin-left:0.3em;
+	cursor: pointer;
+	float: right;
+	font-size: large;
+	margin-bottom: 10px;
+	margin-right: 1em;
+	margin-top: 0;
+}
+
+.loginMessage{
+	color: black;
+	font-size: 1.3em;
+	margin: 1em; 
+	font-weight: lighter;
+}
+
+.loginButtons {
+	 bottom:0;
+	 position:absolute;
+	 width:100%;
+	 height:20% 
+}
+
+.loginOverlay{
+	display: none;
+	top: 0;
+	left: 0;
+	position: absolute;
+	width: 100%; 
+	height: 100%; 
+	z-index: 100; 
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
+.loginDialog{
+	position: absolute;
+	background-color: white; 
+	height: 16em; 
+	width: 38em; 
+	margin: 10% 30% auto;
+	text-shadow: 0 0;
+}
+
+#loginForm > input {
+    margin-left: 10%;
+    width: 80%;
+}
+
+@media screen and (max-width: 1200px) {
+	.loginDialog{
+		position: absolute;
+		background-color: white; 
+		height: 16em; 
+		width: 38em; 
+		margin: 10% 20% auto;
+		text-shadow: 0 0;
+	}
+}
+
+@media screen and (max-width: 900px) {
+	.loginDialog{
+		position: absolute;
+		background-color: white; 
+		height: 16em; 
+		width: 38em; 
+		margin: 10% 10% auto;
+		text-shadow: 0 0;
+	}
+}
+
+@media screen and (max-width: 700px) {
+	.loginDialog{
+		position: absolute;
+		background-color: white; 
+		height: 16em; 
+		width: 35em; 
+		margin: 10% 5% auto;
+		text-shadow: 0 0;
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.loginDialog{
+		position: absolute;
+		background-color: white; 
+		height: 16em; 
+		width: 100%; 
+		margin: 10% 0 auto;
+		text-shadow: 0 0;
+	}
+}
+
+.loginError{
+	font-strength: 600;
+	color: red;
+	margin-left: 4em;
+}
+
+input[type="password"], input[type="text"]{
+	background-color: white;
+    border: 1px solid #999;
+    border-radius: 0.1875em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06) inset;
+    box-sizing: border-box;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 1em;
+    margin-bottom: 0.75em;
+    padding: 0.5em;
+    transition: border-color 0s ease 0s;
+    width: 100%;
+}
+
+.SchemaAttribute {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.SchemaAttributeValue {
+    margin-bottom: 10px;
+}
+
+.closeButton{
+    right: 0px; 
+    position: absolute; 
+    top: 0px; 
+    margin: 0.7em;
+    cursor:pointer;
+    color:black;
+}
+
+.closeButton::after {
+    content: "�";
+    font-family: "FontAwesome";
+    font-size: x-large;
+    font-weight: 900;
+}
+
+.addLink {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+}
+
+.addLink::after {
+    content: "\f0c1";
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+.addText {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+}
+
+.addText::after {
+    content: "\f0f6";
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+.SearchResult .SearchResultContent span {
+    margin-top: 0.3em;
+    vertical-align: top;
+}
+
+.linkedAnswer::after {
+    color: green;
+    content: "\f14a";
+    font-family: FontAwesome;
+    margin-right: 0.15em;
+    vertical-align: top;
+    cursor: pointer;
+}
+
+.unlinkedAnswerIndent {
+    display: inline;
+    margin-left: 1.35em;
+}
+
+.answerTitle {
+    display: inline-block;
+    width: 79%;
+}
+
+@media screen and (max-width: 850px) {
+	.answerTitle{
+    	width: 62%;
+	}
+}
+
+@media screen and (max-width: 450px) {
+	.answerTitle{
+    	width: 39%;
+	}
+}
+
+.SearchExcerptText {
+    display: inline-block;
+    width:96%;
+}
+
+@media screen and (max-width: 1100px) {
+	.SearchExcerptText{
+    	width: 92%;
+	}
+}
+
+@media screen and (max-width: 450px) {
+	.SearchExcerptText{
+    	width: 87%;
+	}
+}
+
+.linkInfo {
+    background-color: #b7cce7;
+    border-radius: 0.4em;
+    font-size: 1em;
+    height: 2em;
+    margin: 0.5em;
+    padding: 0.7em;
+    width: 100%;
+}
+
+.linkedText {
+    display: inline-block;
+    font-size: 1.3em;
+    padding-top: 0.2em;
+    vertical-align: middle;
+}
+
+.linkButtons {
+    border-radius: 0.4em;
+    font-size: 1em;
+    height: 2em;
+    margin: 0.5em;
+    padding: 0.7em;
+    width: 100%;
+}
+
+.addExternalLink {
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+}
+
+.addExternalLink::after {
+    content: "\f0c1";
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+.RecommendContentButton {
+    margin-top: 1em;
+    float: right;
+}
+
+.LabelInput {
+    font-weight: bold;
+    margin-top: 1em;
+}
+
+.Fieldset {
+    margin-top: 4em;
+}
+
+.RecommendationHeader {
+    background: #536a8b;
+    color: #FFF;
+    font-weight: normal;
+    border-bottom: 1px solid #CCC;
+    padding: 7px;
+    line-height: 1.4em;
+    margin-bottom: 2em;
+}
+
+.ButtonDiv {
+    display: inline;
+}
+
+.AnswerAction {
+    clear: both;
+    display: block;
+    float: right;
+    width: 100%;
+    margin-bottom: 1em;
+ }
+ 
+.BasicSelection  {
+    margin-bottom: 0;
+    width: 30%;
+}
+
+.BasicSelection  option {
+    cursor: pointer;
+    min-height: 1.5em;
+}
+    
+fieldset {
+  border: 1px solid #999;
+  margin: 0 0 0.75em 0;
+  padding: 1.5em; 
+}
+
+section, button {
+    margin-top: 1em;
+}
+
+input, label, select {
+  display: block;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 1em; 
+}
+  
+textarea {
+  resize: vertical;
+  width: 100%;
+}
+  
+select {
+  width: auto;
+  max-width: 100%;
+  margin-bottom: 1.5em;
+  height: 1.8em;
+}
+
+.required {
+  color: red;
+}
+
+
+/*
+    Linked Info Styles
+*/
+.LinkedList {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 70%;
+}
+.LinkedPanel{
+    margin-top: 1em;
+}
+
+.LinkedPanel table{
+    border-image: none;
+    border-spacing: 0px;
+    border-style: none solid solid;
+    border-width: 0px 1px 1px;
+    margin: 0px;
+    width: 100%;
+}
+
+.LinkedPanel tr:nth-child(2n) {
+    background-color: #f7f7f7;
+}
+
+.LinkedPanel table td{
+    border-bottom: 1px solid #999;
+    padding: 5px;
+}
+
+
+.LinkedPanel .LinkedListTitle {
+     background: #536a8b none repeat scroll 0% 0%;
+     border: 1px solid #ccc;
+     color: #fff;
+     padding: 7px;
+}
+
+.LinkedPanel .removeLink {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+   /* background-color: #536a8b;*/
+   background-color: #3873c4;
+}
+
+.LinkedPanel .removeLink::after {
+    content: "\f127";
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+.LinkedPanel .expandPanel {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 1em;
+    margin-top: 0;
+    background-color: #ffffff;
+}
+
+.LinkedPanel .expandPanel::after {
+   /* content: "\f152";*/
+    content: url("../images/plus.gif");
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+.LinkedPanel .collapsePanel {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 1em;
+    margin-top: 0;
+    background-color: #ffffff;
+}
+
+.LinkedPanel .collapsePanel::after {
+    /*content: "\f150";*/
+    content: url("../images/minus.gif");
+    font-family: FontAwesome;
+    margin: 0;
+}
+.Navigation {
+    background: #40526b;
+    color: #FFF;
+    padding: 0;
+    text-shadow: #000 0 1px;
+    height: 3em;
+}
+
+.Navigation .NavInner {
+    padding:5px;    
+}
+
+.Navigation .backButton {
+    font-size: large;
+    cursor: pointer;
+    margin-bottom: 1em;
+    
+    transition: all 0.2s ease-in-out;
+    background: #3873c4;
+    border-radius: 0.1875em;
+    color: #fff;
+    font-size: 1em;
+    padding: 0.5em 1em;
+    border: 0;
+    font-weight: 800;
+    letter-spacing: 1.1px;    
+    
+}
+
+.linkInfo .removeLink {
+    cursor: pointer;
+    float: right;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+    background-color: #3873c4;
+}
+   
+.linkInfo .removeLink::after {
+    content: "\f127";
+    font-family: FontAwesome;
+    margin: 0;
+}
+.errorList{
+    display: none;
+    float: left;
+    font-family: FontAwesome;
+    margin-left: 30px;
+    margin-top: 20px;
+    position: relative;
+    border: 1px solid;
+	width: 70%;
+	background-repeat: no-repeat;
+	
+	color: #D8000C;
+	background-color: #FFBABA;
+	
+}
+.subsectionnode{
+	margin-left: 20px;
+}
+/*.nodebutton{
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+    font-size: 10px;
+    font-weight: normal;
+    line-height: 12px;
+}*/
+.nodebutton {
+  display: inline-block;
+  padding: 5px 15px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #3873c4;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 2px #999;
+}
+.nodebutton:hover {background-color: #3873c4}
+
+.nodebutton:active {
+  background-color: #3873c4;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+/* Menu styles */
+/* Symbol styles */
+.menu .symbol-item,
+.menu .symbol-open,
+.menu .symbol-close
+	{
+	float:left;
+	width:16px;
+	height:1em;
+	background-position:left center;
+	background-repeat:no-repeat;
+	}
+.menu .symbol-open  { background-image:url(../../resources/images/minus.png); }
+.menu .symbol-close { background-image:url(../../resources/images/plus.png);}
+
+.nodeBody{
+    margin-top: 10px;
+  /*  border-left: 1px solid #536a8b;*/
+  /* border-left: 1px solid #c0c0c0;
+   padding-left: 0.25cm;*/
+   /*border-bottom: 1px solid #c0c0c0;*/
+}
+
+.nodeTitle{
+    /*background-color:#536a8b;*/
+}
+.nodeTitle .label{
+    /*color:white;*/
+    font-weight: bold;
+    margin-top: 1em;    
+}
+
+.nodeChildren{
+    margin-top: 10px;
+  /*  border-left: 1px solid #536a8b;*/
+   border-left: 1px solid #c0c0c0;
+   padding-left: 0.25cm;
+   /*border-bottom: 1px solid #c0c0c0;*/
+}
+
+.nodeTitle .expandPanel {
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+    background-color: #ffffff;
+}
+
+.nodeTitle .expandPanel::after {
+   /* content: "\f152";*/
+    content: url("../images/plus.gif");
+    font-family: FontAwesome;
+    margin: 0;
+}
+.nodeTitle .collapsePanel {
+    cursor: pointer;
+    float: left;
+    height: 100%;
+    margin-left: 0.5em;
+    padding: 0.25em;
+    width: 2em;
+    margin-top: 0;
+    background-color: #ffffff;
+}
+
+.nodeTitle .collapsePanel::after {
+    /*content: "\f150";*/
+    content: url("../images/minus.gif");
+    font-family: FontAwesome;
+    margin: 0;
+}
+
+#load{
+    display:none;
+    width:100%;
+    height:100%;
+    position:fixed;
+    z-index:9999;
+    background:url("../../resources/images/loading.gif") no-repeat center center rgba(0,0,0,0.25)
+}
+.Message_error{
+    float: left;
+    font-family: FontAwesome;
+    margin-left: 30px;
+    margin-top: 20px;
+    position: relative;
+    border: 1px solid;
+    width: 70%;
+    background-repeat: no-repeat;
+    color: #D8000C;
+    background-color: #FFBABA;	
+}
+.Message_success{
+    float: left;
+    font-family: FontAwesome;
+    margin-left: 30px;
+    margin-top: 20px;
+    position: relative;
+    border: 1px solid;
+    width: 70%;
+    background-repeat: no-repeat;
+    color: #D8000C;
+    background-color: LightGreen;	
+}
+.contribute_content_error {
+    background-color: #b7cce7;
+    border-radius: 0.4em;
+    font-size: 1em;
+    height: 2em;
+    margin: 0.5em;
+    padding: 0.7em;
+    width: 95%;
+    border: 1px solid;
+    
+}
+
+.contribute_content_success {
+   background-color: #b7cce7;
+    border-radius: 0.4em;
+    font-size: 1em;
+    height: 2em;
+    margin: 0.5em;
+    padding: 0.7em;
+    width: 95%;
+    border: 1px solid; 
+    
+}
+
+.deletebutton {
+  display: inline-block;
+  padding: 5px 15px;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #3873c4;
+  border: none;
+  border-radius: 2px;
+  box-shadow: 0 2px #999;
+}
+.deletebutton:hover {background-color: #3873c4}
+
+.deletebutton:active {
+  background-color: #3873c4;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
+}
+
+.hidden {
+    display: none;
+}

@@ -1,0 +1,1348 @@
+package com.hach.salesforce.impl;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.List;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+
+import com.hach.salesforce.dao.TransactionDAO;
+import com.hach.salesforce.utils.common.ApplicationProperties;
+import com.hach.salesforce.utils.common.GenerateSFChannelPayloadUtils;
+import com.hach.salesforce.utils.common.Utilities;
+import com.hach.salesforce.utils.sfop.SalesForceAPICaller;
+import com.hach.salesforce.utils.sfop.SalesForceConstants;
+import com.hach.salesforce.vo.AttachmentDetails;
+import com.hach.salesforce.vo.CategoryDetails;
+import com.hach.salesforce.vo.ContentDetails;
+
+public class StartMigrationImpl {
+
+	private Logger logger = Logger.getLogger(StartMigrationImpl.class);
+
+	private TransactionDAO transactionDAO = null;
+
+	private SalesForceAPICaller caller = null;
+
+	private GenerateSFChannelPayloadUtils payloadUtils = null;
+
+	private Writer writer = null;
+
+	private PrintWriter print = null;
+	
+	private String translationAPIURL=ApplicationProperties.getProperty("translation.api.url");
+	
+	private String categoryAPIURL=ApplicationProperties.getProperty("category.api.url");
+
+	public static void main(String[] args) {
+		// initialize loggers
+		File f = new File(StartMigrationImpl.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+		PropertyConfigurator.configure(f.getParentFile().getAbsolutePath()+"/log.properties");
+		f=  null;
+		try
+		{
+			StartMigrationImpl impl = new StartMigrationImpl();
+			// PROCESS ALL MASTER IDENTIFIERS
+			impl.startMasterIdentifiersProcessing();
+			// PROCESS ALL TRANSLATIONS
+			impl.startTranslationsProcessing();
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "main()", e);
+		}
+	}
+	
+	private void startMasterIdentifiersProcessing()
+	{
+		try
+		{
+			transactionDAO = new TransactionDAO();
+			caller = new SalesForceAPICaller();
+			payloadUtils = new GenerateSFChannelPayloadUtils();
+			List<String> channelList = transactionDAO.getIMChannelDetails();
+			if(null!=channelList && channelList.size()>0)
+			{
+				String channelRefKey=null;
+				for(int at=0;at<channelList.size();at++)
+				{
+					channelRefKey=channelList.get(at).toString();
+					/*
+					 * GET SF CHANNEL RECORD TYPE ID
+					 */
+					String sfChannelRecordTypeId=transactionDAO.getSFChannelRecordTypeId(channelRefKey);
+					/*
+					 * FETCH DATA FROM IM CHANNEL TABLE FOR THE PROCESSING LOCALE
+					 * AND START IDENTIFYING IMAGES & LINKS & ATTACHMENTS
+					 * AND THEN START CREATING THEM IN SALESFORCE
+					 * 
+					 * ONLY MASTER IDENTIFIERS FIRST
+					 */
+					ContentDetails details = null;
+					List<CategoryDetails> categoryList = null;
+					List<ContentDetails> masterIdentifiersList = transactionDAO.getIMDocumentsList(channelRefKey,"MASTERS");
+					if(null!=masterIdentifiersList && masterIdentifiersList.size()>0)
+					{
+						logger.info("startMasterIdentifiersProcessing :: Total Master Identifiers Found are :: >"+ masterIdentifiersList.size());
+						JSONObject contentObj = null;
+						String xmlData=null;
+						String metaData = null;
+						JSONObject salesForceObj = null;
+						List<AttachmentDetails> attachmentsList = null;
+						AttachmentDetails attachmentDetails = null;
+						List<AttachmentDetails> innerLinksList=null;
+						List<AttachmentDetails> imagesList = null;
+						String htmlContent=null;
+						JSONObject responseObject = null;
+						JSONObject getResponseObject = null;
+						for(int a=0;a<masterIdentifiersList.size();a++)
+						{
+							details = (ContentDetails)masterIdentifiersList.get(a);
+							logger.info("startMasterIdentifiersProcessing :: ######## Starting Master Identifier "+(a+1)+" / "+ masterIdentifiersList.size()+" ############");
+							try
+							{
+								contentObj= transactionDAO.getIMDocumentJSONObject(channelRefKey, details.getAutoId());
+								if(null!=contentObj)
+								{
+									// SALES FORCE CHANNEL ID
+									details.setSfChannelId(sfChannelRecordTypeId);
+									
+									// SCHEMA XML - APPLY A TRY CATCH AS CUSTOM MESSAGE ALREADY TRACKED BELOW IF XML DATA NODE IS NULL
+									try
+									{
+										xmlData = contentObj.getString("xml");
+									}
+									catch(Exception e) {
+										// DO NOTHING IN THIS CASE
+									}
+									
+									// METADATA XML - APPLY A TRY CATCH, AS MANY CHANNELS DO NOT HAVE THIS NODE
+									try
+									{
+										metaData = contentObj.getString("metaDataXml");
+									}
+									catch(Exception e) {
+										// DO NOTHING IN THIS CASE
+									}
+									/*
+									 * PROCEED ONLY WHEN XML IS NOT NULL
+									 */
+									if(null!=xmlData && !"".equals(xmlData))
+									{
+										salesForceObj= new JSONObject();
+
+										/*
+										 * RETRIEVE INLINE IMAGES DATA FOR DOCUMENT ID & LOCALE
+										 */
+										imagesList = transactionDAO.getDocumentInlineImages(channelRefKey, details.getDocumentId(), details.getLocale());
+
+										/*
+										 * RETRIEVE INNERLINKS DATA FOR DOCUMENT ID & LOCALE
+										 */
+										innerLinksList = transactionDAO.getDocumentInnerLinks(channelRefKey, details.getDocumentId(), details.getLocale());
+
+										/*
+										 * PERFORM INNERLINKS TRACKING AND REPLACE OPERATION FOR SALES FORCE
+										 */
+										xmlData = payloadUtils.performInnerLinksOperation(xmlData, innerLinksList, details.getDocumentId(), details.getLocale(), transactionDAO);
+
+										/*
+										 * PERFORM INLINE IMAGES REPLACE OPERATION FOR SALES FORCE
+										 */
+										xmlData= payloadUtils.performInlineImagesOperation(xmlData, imagesList, details.getDocumentId(), details.getAnswerId());
+
+										/*
+										 * START PREPARING PAYLOADS
+										 * CHANNEL WISE
+										 */
+										salesForceObj = payloadUtils.createPayload(xmlData, channelRefKey);
+
+										/*
+										 * COMMON CODE FOR ATTACHMENTS FOR ALL CHANNELS
+										 * RETRIEVE ALL ATTACHMENTS (E.G NODES DATA FOR DOCUMENT  / LOCALE)
+										 * CREATE HTML FOR THOSE ATTACHMENTS
+										 */
+										htmlContent="";
+										attachmentsList = transactionDAO.getDocumentAttachments(channelRefKey, details.getDocumentId(), details.getLocale());
+										if(null!=attachmentsList && attachmentsList.size()>0)
+										{
+											for(int b=0;b<attachmentsList.size();b++)
+											{
+												attachmentDetails  =(AttachmentDetails)attachmentsList.get(b);
+												if(null!=attachmentDetails.getCdnUrl() && !"".equals(attachmentDetails.getCdnUrl()))
+												{
+													htmlContent+="<a href=\""+attachmentDetails.getCdnUrl()+"\" target=\"_blank\">";
+												}
+												else
+												{
+													htmlContent+="<a href=\"#\">";
+												}
+												// add attachmentName
+												htmlContent+=attachmentDetails.getAttachmentName();
+												htmlContent+="</a></br>";
+												attachmentDetails = null;
+											}
+										}
+
+										// set attachmentData for field Links__c in salesForceObj Payload Object
+										salesForceObj.put("Links__c", htmlContent);
+										htmlContent = null;
+										attachmentDetails = null;
+										attachmentsList = null;
+
+										/*
+										 * COMMON FIELDS OPERATION
+										 */
+										salesForceObj = payloadUtils.performCommonFieldsOperation(details, salesForceObj, sfChannelRecordTypeId);
+
+
+										/*
+										 * META DATA TAG OPERATION
+										 */
+										if(null!=metaData && !"".equals(metaData) && !metaData.toLowerCase().equals("<META/>".toLowerCase()))
+										{
+											salesForceObj = metaDataOperation(metaData, salesForceObj);
+										}
+
+										/*
+										 * SALES FORCE CREATE / UPDATE OPERATION
+										 */
+										if(null!=salesForceObj)
+										{
+											if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+											{
+												// perform update Operation in Sales Force
+												details = updateSFDocumentOperation(details, responseObject, salesForceObj, getResponseObject);
+												// set EXECUTION METHOD AS UPDATE
+												details.setExecutionMethod("UPDATE");
+												if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+												{
+													/*
+													 * RETRIEVE CATEGORY LIST FOR THE PROCESSED DOCUMENT
+													 */
+													try
+													{
+														categoryList = transactionDAO.getDocumentCategoryList(channelRefKey, details.getDocumentId(), details.getLocale());
+														if(null!=categoryList && categoryList.size()>0)
+														{
+															logger.info("startMasterIdentifiersProcessing :: Total Categories found for "+details.getDocumentId()+" of "+details.getLocale()+" are :: >"+ categoryList.size());
+															/*
+															 * START CATEGORY PROCESSING
+															 */
+															categoryList = addSFCategoriesOperation(details, categoryList);
+														}
+														else
+														{
+															logger.info("startMasterIdentifiersProcessing :: Category Processing Not Required, as No Categories found for "+details.getDocumentId()+" of "+details.getLocale());
+														}
+													}
+													catch(Exception e)
+													{
+														Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+														// capture error Message
+														details = captureErrorMessage(details, "Failed to fetch Categories Data for Processing Document from DB.", e);
+													}
+												}
+											}
+											else
+											{
+												// set EXECUTION METHOD AS CREATE
+												details.setExecutionMethod("CREATE");
+												// perform create Operation in Sales Force
+												details = createSFDocumentOperation(details, responseObject, salesForceObj, getResponseObject);
+												if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+												{
+													/*
+													 * RETRIEVE CATEGORY LIST FOR THE PROCESSED DOCUMENT
+													 */
+													try
+													{
+														categoryList = transactionDAO.getDocumentCategoryList(channelRefKey, details.getDocumentId(), details.getLocale());
+														if(null!=categoryList && categoryList.size()>0)
+														{
+															logger.info("startMasterIdentifiersProcessing :: Total Categories found for "+details.getDocumentId()+" of "+details.getLocale()+" are :: >"+ categoryList.size());
+															/*
+															 * START CATEGORY PROCESSING
+															 */
+															categoryList = addSFCategoriesOperation(details, categoryList);
+														}
+														else
+														{
+															logger.info("startMasterIdentifiersProcessing :: Category Processing Not Required, as No Categories found for "+details.getDocumentId()+" of "+details.getLocale());
+														}
+													}
+													catch(Exception e)
+													{
+														Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+														// capture error Message
+														details = captureErrorMessage(details, "Failed to fetch Categories Data for Processing Document from DB.", e);
+													}
+												}
+											}
+										}
+										salesForceObj = null;
+									}
+									else
+									{
+										// capture error Message
+										details = captureErrorMessage(details, "Schema Data for the KA Document is NULL.", null);
+									}
+									xmlData=  null;
+									metaData = null;
+								}
+							}
+							catch(Exception e)
+							{
+								Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+								// capture error Message
+								details = captureErrorMessage(details, "Please refer Error Message, either KA Parsing or Sales Force Processing Failed.", e);
+							}
+							
+							/*
+							 * PROCEED FOR SAVING THE DOCUMENT IN DATABASE WITH SALES FORCE OPERATION
+							 * ALSO UPDATE THE INNERLINKS DETAILS WITH STATUS
+							 */
+							transactionDAO.updateSFTransactionDetails(details, payloadUtils.getAllInnerLinksList(), channelRefKey, categoryList);
+							
+							// set INNERLINKS LIST TO NULL
+							payloadUtils.setAllInnerLinksList(null);
+							
+							// set CATEGORY LIST TO NULL
+							categoryList=  null;
+							
+							details = null;
+							contentObj = null;
+							xmlData=null;
+							metaData = null;
+							salesForceObj = null;
+							attachmentsList = null;
+							attachmentDetails = null;
+							innerLinksList=null;
+							imagesList = null;
+							htmlContent=null;
+							responseObject = null;
+							getResponseObject = null;
+
+							logger.info("startMasterIdentifiersProcessing :: ######## Ending Master Identifier "+(a+1)+" / "+ masterIdentifiersList.size()+" ############");
+							
+						}
+					}
+					masterIdentifiersList = null;
+					channelRefKey  =null;
+				}
+			}
+			channelList  =null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+		}
+		finally
+		{
+			try
+			{
+				if(null!=transactionDAO.conn)
+				{
+					transactionDAO.conn.close();
+				}
+				transactionDAO.conn  =null;
+			}
+			catch(Exception e)
+			{
+				Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+			}
+			transactionDAO= null;
+			caller = null;
+			payloadUtils = null;
+		}
+	}
+
+	private void startTranslationsProcessing()
+	{
+		try
+		{
+			transactionDAO = new TransactionDAO();
+			caller = new SalesForceAPICaller();
+			payloadUtils = new GenerateSFChannelPayloadUtils();
+			List<String> channelList = transactionDAO.getIMChannelDetails();
+			if(null!=channelList && channelList.size()>0)
+			{
+				String channelRefKey=null;
+				for(int at=0;at<channelList.size();at++)
+				{
+					channelRefKey=channelList.get(at).toString();
+					/*
+					 * GET SF CHANNEL RECORD TYPE ID
+					 */
+					String sfChannelRecordTypeId=transactionDAO.getSFChannelRecordTypeId(channelRefKey);
+					/*
+					 * FETCH DATA FROM IM CHANNEL TABLE FOR THE PROCESSING LOCALE
+					 * AND START IDENTIFYING IMAGES & LINKS & ATTACHMENTS
+					 * AND THEN START CREATING THEM IN SALESFORCE
+					 * 
+					 * ONLY MASTER IDENTIFIERS FIRST
+					 */
+					ContentDetails details = null;
+					List<ContentDetails> translationsList = transactionDAO.getIMDocumentsList(channelRefKey,"TRANSLATIONS");
+					if(null!=translationsList && translationsList.size()>0)
+					{
+						logger.info("startTranslationsProcessing :: Total Translations Found are :: >"+ translationsList.size());
+						JSONObject contentObj = null;
+						String xmlData=null;
+						String metaData = null;
+						JSONObject salesForceObj = null;
+						List<AttachmentDetails> attachmentsList = null;
+						AttachmentDetails attachmentDetails = null;
+						List<AttachmentDetails> innerLinksList=null;
+						List<AttachmentDetails> imagesList = null;
+						String htmlContent=null;
+						JSONObject responseObject = null;
+						JSONObject getResponseObject = null;
+						String masterIdentifierArticleId=null;
+						List<CategoryDetails> categoryList = null;
+						for(int a=0;a<translationsList.size();a++)
+						{
+							details = (ContentDetails)translationsList.get(a);
+							logger.info("startTranslationsProcessing :: ######## Starting Translation "+(a+1)+" / "+ translationsList.size()+" ############");
+							try
+							{
+								/*
+								 * RETRIEVE KnowledgeArticleId OF MASTER IDENTIFIER
+								 */
+								masterIdentifierArticleId = transactionDAO.getMasterIdentifierArticleId(channelRefKey, details.getDocumentId(), details.getBaseLocale());
+								if(null!=masterIdentifierArticleId && !"".equals(masterIdentifierArticleId))
+								{
+									contentObj= transactionDAO.getIMDocumentJSONObject(channelRefKey, details.getAutoId());
+									if(null!=contentObj)
+									{
+										// SALES FORCE CHANNEL ID
+										details.setSfChannelId(sfChannelRecordTypeId);
+
+										// SCHEMA XML
+										xmlData = contentObj.getString("xml");
+
+										// METADATA XML
+										metaData = contentObj.getString("metaDataXml");
+										/*
+										 * PROCEED ONLY WHEN XML IS NOT NULL
+										 */
+										if(null!=xmlData && !"".equals(xmlData))
+										{
+											salesForceObj= new JSONObject();
+
+											/*
+											 * RETRIEVE INLINE IMAGES DATA FOR DOCUMENT ID & LOCALE
+											 */
+											imagesList = transactionDAO.getDocumentInlineImages(channelRefKey, details.getDocumentId(), details.getLocale());
+
+											/*
+											 * RETRIEVE INNERLINKS DATA FOR DOCUMENT ID & LOCALE
+											 */
+											innerLinksList = transactionDAO.getDocumentInnerLinks(channelRefKey, details.getDocumentId(), details.getLocale());
+
+											/*
+											 * PERFORM INNERLINKS TRACKING AND REPLACE OPERATION FOR SALES FORCE
+											 */
+											xmlData = payloadUtils.performInnerLinksOperation(xmlData, innerLinksList, details.getDocumentId(), details.getLocale(), transactionDAO);
+
+											/*
+											 * PERFORM INLINE IMAGES REPLACE OPERATION FOR SALES FORCE
+											 */
+											xmlData= payloadUtils.performInlineImagesOperation(xmlData, imagesList, details.getDocumentId(), details.getAnswerId());
+
+											/*
+											 * START PREPARING PAYLOADS
+											 * CHANNEL WISE
+											 */
+											salesForceObj = payloadUtils.createPayload(xmlData, channelRefKey);
+
+											/*
+											 * COMMON CODE FOR ATTACHMENTS FOR ALL CHANNELS
+											 * RETRIEVE ALL ATTACHMENTS (E.G NODES DATA FOR DOCUMENT  / LOCALE)
+											 * CREATE HTML FOR THOSE ATTACHMENTS
+											 */
+											htmlContent="";
+											attachmentsList = transactionDAO.getDocumentAttachments(channelRefKey, details.getDocumentId(), details.getLocale());
+											if(null!=attachmentsList && attachmentsList.size()>0)
+											{
+												for(int b=0;b<attachmentsList.size();b++)
+												{
+													attachmentDetails  =(AttachmentDetails)attachmentsList.get(b);
+													if(null!=attachmentDetails.getCdnUrl() && !"".equals(attachmentDetails.getCdnUrl()))
+													{
+														htmlContent+="<a href=\""+attachmentDetails.getCdnUrl()+"\" target=\"_blank\">";
+													}
+													else
+													{
+														htmlContent+="<a href=\"#\">";
+													}
+													// add attachmentName
+													htmlContent+=attachmentDetails.getAttachmentName();
+													htmlContent+="</a></br>";
+													attachmentDetails = null;
+												}
+											}
+
+											// set attachmentData for field Links__c in salesForceObj Payload Object
+											salesForceObj.put("Links__c", htmlContent);
+											htmlContent = null;
+											attachmentDetails = null;
+											attachmentsList = null;
+
+											/*
+											 * COMMON FIELDS OPERATION
+											 */
+											salesForceObj = payloadUtils.performCommonFieldsOperation(details, salesForceObj, sfChannelRecordTypeId);
+
+
+											/*
+											 * META DATA TAG OPERATION
+											 */
+											if(null!=metaData && !"".equals(metaData) && !metaData.toLowerCase().equals("<META/>".toLowerCase()))
+											{
+												salesForceObj = metaDataOperation(metaData, salesForceObj);
+											}
+
+											/*
+											 * SALES FORCE CREATE / UPDATE TRANSLATION OPERATION
+											 */
+											if(null!=salesForceObj)
+											{
+												/*
+												 * if salesForce Record Id for the currentDocument is NOT NULL
+												 * 	THEN UPDATE OPERATION
+												 * Else
+												 * 	Create a New Draft Version for the Translation Locale for Processing Document
+												 * 	Read the articleVersionId from the Output
+												 * 	Call Update Operation using the articleVersionId from previous Output
+												 * 	Make a Get Call to read the other details for the translation created in 
+												 */
+												
+												if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+												{
+													// set EXECUTION METHOD AS UPDATE
+													details.setExecutionMethod("UPDATE");
+													// perform update Operation in Sales Force
+													details = updateSFDocumentOperation(details, responseObject, salesForceObj, getResponseObject);
+													/*
+													 * NO NEED TO PERFORM CATEGORY OPERATION HERE
+													 * AS IN SALES FORCE ALL CATEGORIES WILL BE MAPPED WITH MASTER IDENTIFIERS ONLY
+													 * 
+													 */
+													
+//													if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+//													{
+//														/*
+//														 * RETRIEVE CATEGORY LIST FOR THE PROCESSED DOCUMENT
+//														 */
+//														try
+//														{
+//															categoryList = transactionDAO.getDocumentCategoryList(channelRefKey, details.getDocumentId(), details.getLocale());
+//															if(null!=categoryList && categoryList.size()>0)
+//															{
+//																logger.info("startMasterIdentifiersProcessing :: Total Categories found for "+details.getDocumentId()+" of "+details.getLocale()+" are :: >"+ categoryList.size());
+//																/*
+//																 * START CATEGORY PROCESSING
+//																 */
+//																categoryList = addSFCategoriesOperation(details, categoryList);
+//															}
+//															else
+//															{
+//																logger.info("startMasterIdentifiersProcessing :: Category Processing Not Required, as No Categories found for "+details.getDocumentId()+" of "+details.getLocale());
+//															}
+//														}
+//														catch(Exception e)
+//														{
+//															Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+//															// capture error Message
+//															details = captureErrorMessage(details, "Failed to fetch Categories Data for Processing Document from DB.", e);
+//														}
+//													}
+												}
+												else
+												{
+													// set EXECUTION METHOD AS CREATE
+													details.setExecutionMethod("CREATE");
+													// perform create Translation Operation in Sales Force
+													details = createSFTranslationOperation(details, salesForceObj, masterIdentifierArticleId);
+													/*
+													 * NO NEED TO PERFORM CATEGORY OPERATION HERE
+													 * AS IN SALES FORCE ALL CATEGORIES WILL BE MAPPED WITH MASTER IDENTIFIERS ONLY
+													 * 
+													 */
+//													if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+//													{
+//														/*
+//														 * RETRIEVE CATEGORY LIST FOR THE PROCESSED DOCUMENT
+//														 */
+//														try
+//														{
+//															categoryList = transactionDAO.getDocumentCategoryList(channelRefKey, details.getDocumentId(), details.getLocale());
+//															if(null!=categoryList && categoryList.size()>0)
+//															{
+//																logger.info("startMasterIdentifiersProcessing :: Total Categories found for "+details.getDocumentId()+" of "+details.getLocale()+" are :: >"+ categoryList.size());
+//																/*
+//																 * START CATEGORY PROCESSING
+//																 */
+//																categoryList = addSFCategoriesOperation(details, categoryList);
+//															}
+//															else
+//															{
+//																logger.info("startMasterIdentifiersProcessing :: Category Processing Not Required, as No Categories found for "+details.getDocumentId()+" of "+details.getLocale());
+//															}
+//														}
+//														catch(Exception e)
+//														{
+//															Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startMasterIdentifiersProcessing()", e);
+//															// capture error Message
+//															details = captureErrorMessage(details, "Failed to fetch Categories Data for Processing Document from DB.", e);
+//														}
+//													}
+												}
+											}
+											salesForceObj = null;
+										}
+										else
+										{
+											// capture error Message
+											details = captureErrorMessage(details, "Schema Data for the KA Document is NULL.", null);
+										}
+										xmlData=  null;
+										metaData = null;
+									}
+									contentObj = null;
+								}
+								else
+								{
+									logger.info("startTranslationsProcessing :: Failed to identify Master Identifier Sales Force Article Id for "+ details.getDocumentId()+" of "+ details.getLocale());
+									// capture error Message
+									details = captureErrorMessage(details, "Failed to create Translation, since Master Identifier is not yet Created.", null);
+								}
+								masterIdentifierArticleId = null;
+							}
+							catch(Exception e)
+							{
+								Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startTranslationsProcessing()", e);
+								// capture error Message
+								details = captureErrorMessage(details, "Please refer Error Message, either KA Parsing or Sales Force Processing Failed.", e);
+							}
+							
+							/*
+							 * PROCEED FOR SAVING THE DOCUMENT IN DATABASE WITH SALES FORCE OPERATION
+							 * ALSO UPDATE THE INNERLINKS DETAILS WITH STATUS
+							 */
+							transactionDAO.updateSFTransactionDetails(details, payloadUtils.getAllInnerLinksList(), channelRefKey, categoryList);
+							
+							// set INNERLINKS LIST TO NULL
+							payloadUtils.setAllInnerLinksList(null);
+							
+							// set CATEGORY LIST TO NULL
+							categoryList = null;
+							
+							details = null;
+							contentObj = null;
+							xmlData=null;
+							metaData = null;
+							salesForceObj = null;
+							attachmentsList = null;
+							attachmentDetails = null;
+							innerLinksList=null;
+							imagesList = null;
+							htmlContent=null;
+							responseObject = null;
+							getResponseObject = null;
+
+							logger.info("startTranslationsProcessing :: ######## Ending Master Identifier "+(a+1)+" / "+ translationsList.size()+" ############");
+						}
+					}
+					translationsList = null;
+					channelRefKey  =null;
+				}
+			}
+			channelList  =null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startTranslationsProcessing()", e);
+		}
+		finally
+		{
+			try
+			{
+				if(null!=transactionDAO.conn)
+				{
+					transactionDAO.conn.close();
+				}
+				transactionDAO.conn  =null;
+			}
+			catch(Exception e)
+			{
+				Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "startTranslationsProcessing()", e);
+			}
+			transactionDAO= null;
+			caller = null;
+			payloadUtils = null;
+		}
+	}
+
+	private JSONObject metaDataOperation(String metaData, JSONObject salesForceObj) throws ParserConfigurationException, SAXException, IOException, JSONException 
+	{
+		String metaDataContent = null;
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		Document doc = builder.parse(new InputSource(new StringReader(metaData)));
+		if(null!=doc)
+		{
+			doc.normalize();
+			Node metaDataNode = doc.getFirstChild();
+			if(null!=metaDataNode)
+			{
+				/*
+				 * TWO POSSIBILITIES OF META DATA
+				 */
+				NodeList childNodeList = metaDataNode.getChildNodes();
+				if(null!=childNodeList && childNodeList.getLength()>0)
+				{
+					Node childNode=null;
+					String tempText=null;
+					for(int t=0;t<childNodeList.getLength();t++)
+					{
+						childNode = (Node)childNodeList.item(t);
+						if(null!=childNode.getNodeName() && !"".equals(childNode.getNodeName()))
+						{
+							// READ TEXT VALUE OF THE NODES
+							tempText =  Utilities.readNodeValue(childNode);
+							if(null!=tempText && !"".equals(tempText))
+							{
+								if(null!=metaDataContent && !"".equals(metaDataContent))
+								{
+									metaDataContent+="\n"+tempText;
+								}
+								else
+								{
+									metaDataContent=tempText;
+								}
+							}
+							tempText  =null;
+						}
+						childNode = null;
+					}
+				}
+			}
+		}
+		doc = null;
+		factory=  null;
+		builder=null;
+
+		// set MetaData Node
+		if(null!=metaDataContent && !"".equals(metaDataContent))
+		{
+			// set Key_Words_SEO__c
+			salesForceObj.put("Key_Words_SEO__c", metaDataContent);
+		}
+		else
+		{
+			salesForceObj.put("Key_Words_SEO__c", JSONObject.NULL);
+		}
+		metaDataContent = null;
+
+		return salesForceObj;
+	}
+
+	private ContentDetails captureErrorMessage(ContentDetails details, String customErrorMessage, Exception e)
+	{
+		try
+		{
+			// set sfProcessingstatus to Failure
+			details.setSfProcessingStatus("FAILURE");
+
+			// set Remarks for Failure Cases
+			if(null!=customErrorMessage && !"".equals(customErrorMessage))
+			{
+				details.setSfRemarks(customErrorMessage);
+			}
+
+			// only when Exception is not NULL
+			if(null!=e)
+			{
+				writer = new StringWriter();
+				print = new PrintWriter(writer);
+				e.printStackTrace();
+
+				// set errorMessage
+				details.setSfErrorMessage(writer.toString());
+			}
+
+			// clear all printers & writers
+			if(null!=writer)
+			{
+				writer.flush();
+				writer.close();
+			}
+			writer = null;
+			if(null!=print)
+			{
+				print.flush();
+				print.close();
+			}
+			print=  null;
+		}
+		catch(Exception w)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "captureErrorMessage()", w);
+		}
+		return details;
+	}
+
+	private ContentDetails createSFDocumentOperation(ContentDetails details, JSONObject responseObject, JSONObject salesForceObj, JSONObject getResponseObject)
+	{
+		try
+		{
+			logger.info("Payload :: >"+ salesForceObj);
+			responseObject = caller.callSFRestAPI("", SalesForceConstants.METHOD_POST, salesForceObj.toString());
+			if(null!=responseObject)
+			{
+				if(responseObject.getString("CALL_STATUS").equals("SUCCESS"))
+				{
+					logger.info("createSFDocumentOperation :: Sales Force Create API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+". Proceed for Reading SalesForce Record Id.");
+					try
+					{
+						if(null!=responseObject.getJSONObject("FINAL_DATA").getString("id"))
+						{
+							details.setSfRecordId(responseObject.getJSONObject("FINAL_DATA").getString("id"));
+							/*
+							 * NOW PROCEED FOR FETCHING THE OTHER DOCUMENT DETAILS FROM SALES FORCE
+							 */
+							if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+							{
+								try
+								{
+									getResponseObject = caller.callSFRestAPI(details.getSfRecordId(), SalesForceConstants.METHOD_GET, null);
+									if(null!=getResponseObject)
+									{
+										if(getResponseObject.getString("CALL_STATUS").equals("SUCCESS"))
+										{
+											logger.info("createSFDocumentOperation :: Sales Force Get API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+" where SF Record Id >> "+details.getSfRecordId()+". Proceed for Reading SalesForce Other Details.");
+											try
+											{
+												// PROCESSING STATUS
+												details.setSfProcessingStatus("SUCCESS");
+												// SALESFORCE URL
+												details.setSfdocumentURL(getResponseObject.getJSONObject("FINAL_DATA").getJSONObject("attributes").getString("url"));
+												// UrlName
+												details.setSfURLName(getResponseObject.getJSONObject("FINAL_DATA").getString("UrlName"));
+												// ArticleNumber
+												details.setSfArticleNumber(getResponseObject.getJSONObject("FINAL_DATA").getString("ArticleNumber"));
+												// Article Id - Will be used for creating translations
+												details.setSfArticleId(getResponseObject.getJSONObject("FINAL_DATA").getString("KnowledgeArticleId"));
+												// Language
+												details.setSfLocale(getResponseObject.getJSONObject("FINAL_DATA").getString("Language"));
+												// IsMasterLanguage
+												if(getResponseObject.getJSONObject("FINAL_DATA").getBoolean("IsMasterLanguage")==true)
+												{
+													details.setSfMasterIdentifier("TRUE");
+												}
+												else 
+												{
+													details.setSfMasterIdentifier("FALSE");
+												}
+											}
+											catch(Exception e)
+											{
+												Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+												// set Error Message as Failed to identify Required Attributes from Sales Force Get API Response.
+												details = captureErrorMessage(details, "Failed to identify Required Attributes from Sales Force Get API Response.", e);
+											}
+										}
+										else
+										{
+											logger.info("createSFDocumentOperation :: Failed to execute Sales Force Get API for "+ details.getDocumentId()+" of "+ details.getLocale()+" where SF Record Id >> "+details.getSfRecordId()+".");
+											// capture error Message
+											try
+											{
+												if(null!=getResponseObject.getJSONArray("ERROR_DATA"))
+												{
+													// set processing Status as Failure
+													details.setSfProcessingStatus("FAILURE");
+													// set remarks
+													details.setSfRemarks("Failed to execute Sales Force Get API.");
+													// set Error Message received from Sales Force API Call
+													details.setErrorMessage(getResponseObject.getJSONArray("ERROR_DATA").toString());
+												}
+											}
+											catch(Exception e) 
+											{
+												Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+												// set Error Message as Failed to read Error JSON Array from API Call
+												details = captureErrorMessage(details, "Failed to read Error JSON Array from Get API Call.", e);
+											}
+										}
+									}
+									getResponseObject = null;
+								}
+								catch(Exception e)
+								{
+									Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+									// capture error Message
+									details = captureErrorMessage(details, "Failed to read Response Object from Sales Force GET API.", e);
+								}
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+						// capture error Message
+						details = captureErrorMessage(details, "Failed to read Sales Force Knowledge Article Id for created document.", e);
+					}
+				}
+				else
+				{
+					logger.info("createSFDocumentOperation :: Failed to execute Sales Force Create API for "+ details.getDocumentId()+" of "+ details.getLocale()+".");
+					// capture error Message
+					try
+					{
+						if(null!=responseObject.getJSONArray("ERROR_DATA"))
+						{
+							// set processing Status as Failure
+							details.setSfProcessingStatus("FAILURE");
+							// set remarks
+							details.setSfRemarks("Failed to execute Sales Force Create API.");
+							// set Error Message received from Sales Force API Call
+							details.setErrorMessage(responseObject.getJSONArray("ERROR_DATA").toString());
+						}
+					}
+					catch(Exception e) 
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+						// set Error Message as Failed to read Error JSON Array from API Call
+						details = captureErrorMessage(details, "Failed to read Error JSON Array from Create API Call.", e);
+					}
+				}
+			}
+			responseObject  =null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFDocumentOperation()", e);
+			// capture error Message
+			details = captureErrorMessage(details, "Failed to read Response Object from Sales Force Create API.", e);
+		}
+		return details;
+	}
+
+	private ContentDetails updateSFDocumentOperation(ContentDetails details, JSONObject responseObject, JSONObject salesForceObj, JSONObject getResponseObject)
+	{
+		logger.info("Payload :: >"+ salesForceObj);
+		try
+		{
+			responseObject = caller.callSFRestAPI(details.getSfRecordId(), SalesForceConstants.METHOD_PATCH, salesForceObj.toString());
+			if(null!=responseObject)
+			{
+				if(responseObject.getString("CALL_STATUS").equals("SUCCESS"))
+				{
+					logger.info("updateSFDocumentOperation :: Sales Force Update API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+" Where Sales Force Id :: >"+ details.getSfRecordId());
+					// SET PROCESSING STATUS TO SUCCESS
+					details.setSfProcessingStatus("SUCCESS");
+				}
+				else
+				{
+					logger.info("updateSFDocumentOperation :: Failed to execute Sales Force Update API for "+ details.getDocumentId()+" of "+ details.getLocale()+" Where Sales Force Id :: >"+details.getSfRecordId());
+					// capture error Message
+					try
+					{
+						if(null!=responseObject.getJSONArray("ERROR_DATA"))
+						{
+							// set processing Status as Failure
+							details.setSfProcessingStatus("FAILURE");
+							// set remarks
+							details.setSfRemarks("Failed to execute Sales Force Update API.");
+							// set Error Message received from Sales Force API Call
+							details.setErrorMessage(responseObject.getJSONArray("ERROR_DATA").toString());
+						}
+					}
+					catch(Exception e) 
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "updateSFDocumentOperation()", e);
+						// set Error Message as Failed to read Error JSON Array from API Call
+						details = captureErrorMessage(details, "Failed to read Error JSON Array from Update API Call.", e);
+					}
+				}
+			}
+			responseObject  =null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "updateSFDocumentOperation()", e);
+			// capture error Message
+			details = captureErrorMessage(details, "Failed to read Response Object from Sales Force Update API.", e);
+		}
+		return details;
+	}
+	
+	private ContentDetails createSFTranslationOperation(ContentDetails details,  JSONObject salesForceObj, String masterIdentifierArticleId)
+	{
+		JSONObject getResponseObject = null;
+		JSONObject responseObject = null;
+		JSONObject updateResponseObject = null;
+		try
+		{
+			logger.info("Translation Payload :: >"+ salesForceObj);
+			JSONObject payloadObj = new JSONObject();
+			payloadObj.put("articleId", masterIdentifierArticleId);
+			/*
+			 * KA LOCALES Vs SALES FORCE LOCALES
+			 * de_DE = de
+			 * fr_FR = fr
+			 * it_IT = IT
+			 * pt_BR = pt_BR
+			 * pt_PT = pt_PT
+			 * en_GB = en_GB
+			 * es_ES = es
+			 */
+			if(details.getLocale().equals("de_DE"))
+			{
+				payloadObj.put("language", "de");
+			}
+			else if(details.getLocale().equals("fr_FR"))
+			{
+				payloadObj.put("language", "fr");
+			}
+			else if(details.getLocale().equals("it_IT"))
+			{
+				payloadObj.put("language", "it");
+			}
+			else if(details.getLocale().equals("es_ES"))
+			{
+				payloadObj.put("language", "es");
+			}
+			else
+			{
+				payloadObj.put("language", details.getLocale());
+			}
+			
+			payloadObj.put("sendEmailNotification", false);
+			
+			responseObject = caller.callSFRestAPIForOtherOperations(translationAPIURL,SalesForceConstants.METHOD_POST, payloadObj.toString());
+			if(null!=responseObject)
+			{
+				if(responseObject.getString("CALL_STATUS").equals("SUCCESS"))
+				{
+					logger.info("createSFTranslationOperation :: Sales Force Create Translation API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+". Proceed for Reading SalesForce Translation Record Id (articleVersionId).");
+					try
+					{
+						if(null!=responseObject.getJSONObject("FINAL_DATA").getString("articleVersionId"))
+						{
+							details.setSfRecordId(responseObject.getJSONObject("FINAL_DATA").getString("articleVersionId"));
+							/*
+							 * NOW PROCEED FOR UPDATING THE TRANSLATION DETAILS USING THE SF RECORD ID IN SALES FORCE
+							 */
+							if(null!=details.getSfRecordId() && !"".equals(details.getSfRecordId()))
+							{
+								try
+								{
+									updateResponseObject = caller.callSFRestAPI(details.getSfRecordId(), SalesForceConstants.METHOD_PATCH, salesForceObj.toString());
+									if(null!=updateResponseObject)
+									{
+										if(updateResponseObject.getString("CALL_STATUS").equals("SUCCESS"))
+										{
+											logger.info("createSFTranslationOperation :: Sales Force Update Translation API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+" Where Sales Force Translation Id :: >"+ details.getSfRecordId());
+											
+											/*
+											 * PROCEED FOR FETCHING OTHER SALES FORCE DETAILS OF THE TRANSLATION
+											 */
+											try
+											{
+												getResponseObject = caller.callSFRestAPI(details.getSfRecordId(), SalesForceConstants.METHOD_GET, null);
+												if(null!=getResponseObject)
+												{
+													if(getResponseObject.getString("CALL_STATUS").equals("SUCCESS"))
+													{
+														logger.info("createSFTranslationOperation :: Sales Force Get Translation API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+" where SF Record Id >> "+details.getSfRecordId()+". Proceed for Reading SalesForce Other Translation Details.");
+														try
+														{
+															// PROCESSING STATUS
+															details.setSfProcessingStatus("SUCCESS");
+															// SALESFORCE URL
+															details.setSfdocumentURL(getResponseObject.getJSONObject("FINAL_DATA").getJSONObject("attributes").getString("url"));
+															// UrlName
+															details.setSfURLName(getResponseObject.getJSONObject("FINAL_DATA").getString("UrlName"));
+															// ArticleNumber
+															details.setSfArticleNumber(getResponseObject.getJSONObject("FINAL_DATA").getString("ArticleNumber"));
+															// Article Id - Will be used for creating translations
+															details.setSfArticleId(getResponseObject.getJSONObject("FINAL_DATA").getString("KnowledgeArticleId"));
+															// Language
+															details.setSfLocale(getResponseObject.getJSONObject("FINAL_DATA").getString("Language"));
+															// IsMasterLanguage
+															if(getResponseObject.getJSONObject("FINAL_DATA").getBoolean("IsMasterLanguage")==true)
+															{
+																details.setSfMasterIdentifier("TRUE");
+															}
+															else 
+															{
+																details.setSfMasterIdentifier("FALSE");
+															}
+														}
+														catch(Exception e)
+														{
+															Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+															// set Error Message as Failed to identify Required Attributes from Sales Force Get API Response.
+															details = captureErrorMessage(details, "Failed to identify Required Attributes from Sales Force Get Translation API Response.", e);
+														}
+													}
+													else
+													{
+														logger.info("createSFTranslationOperation :: Failed to execute Sales Force Get Translation API for "+ details.getDocumentId()+" of "+ details.getLocale()+" where SF Record Id >> "+details.getSfRecordId()+".");
+														// capture error Message
+														try
+														{
+															if(null!=getResponseObject.getJSONArray("ERROR_DATA"))
+															{
+																// set processing Status as Failure
+																details.setSfProcessingStatus("FAILURE");
+																// set remarks
+																details.setSfRemarks("Failed to execute Sales Force Get Translation API.");
+																// set Error Message received from Sales Force API Call
+																details.setErrorMessage(getResponseObject.getJSONArray("ERROR_DATA").toString());
+															}
+														}
+														catch(Exception e) 
+														{
+															Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+															// set Error Message as Failed to read Error JSON Array from API Call
+															details = captureErrorMessage(details, "Failed to read Error JSON Array from Get Translation API Call.", e);
+														}
+													}
+												}
+												getResponseObject = null;
+											}
+											catch(Exception e)
+											{
+												Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+												// capture error Message
+												details = captureErrorMessage(details, "Failed to read Response Object from Sales Force GET Translation API.", e);
+											}
+										}
+										else
+										{
+											logger.info("createSFTranslationOperation :: Failed to execute Sales Force Update Translation API for "+ details.getDocumentId()+" of "+ details.getLocale()+" Where Sales Force Id :: >"+details.getSfRecordId());
+											// capture error Message
+											try
+											{
+												if(null!=updateResponseObject.getJSONArray("ERROR_DATA"))
+												{
+													// set processing Status as Failure
+													details.setSfProcessingStatus("FAILURE");
+													// set remarks
+													details.setSfRemarks("Failed to execute Sales Force Update Translation API.");
+													// set Error Message received from Sales Force API Call
+													details.setErrorMessage(updateResponseObject.getJSONArray("ERROR_DATA").toString());
+												}
+											}
+											catch(Exception e) 
+											{
+												Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+												// set Error Message as Failed to read Error JSON Array from API Call
+												details = captureErrorMessage(details, "Failed to read Error JSON Array from Update Translation API Call.", e);
+											}
+										}
+									}
+									updateResponseObject  =null;
+								}
+								catch(Exception e)
+								{
+									Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+									// capture error Message
+									details = captureErrorMessage(details, "Failed to read Response Object from Sales Force Update Translation API.", e);
+								}
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+						// capture error Message
+						details = captureErrorMessage(details, "Failed to read Sales Force Translation Article Version Id for created document.", e);
+					}
+				}
+				else
+				{
+					logger.info("createSFTranslationOperation :: Failed to execute Sales Force Create Translation API for "+ details.getDocumentId()+" of "+ details.getLocale()+".");
+					// capture error Message
+					try
+					{
+						if(null!=responseObject.getJSONArray("ERROR_DATA"))
+						{
+							// set processing Status as Failure
+							details.setSfProcessingStatus("FAILURE");
+							// set remarks
+							details.setSfRemarks("Failed to execute Sales Force Create Translation API.");
+							// set Error Message received from Sales Force API Call
+							details.setErrorMessage(responseObject.getJSONArray("ERROR_DATA").toString());
+						}
+					}
+					catch(Exception e) 
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+						// set Error Message as Failed to read Error JSON Array from API Call
+						details = captureErrorMessage(details, "Failed to read Error JSON Array from Create Translation API Call.", e);
+					}
+				}
+			}
+			responseObject  =null;
+			payloadObj = null;
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "createSFTranslationOperation()", e);
+			// capture error Message
+			details = captureErrorMessage(details, "Failed to read Response Object from Sales Force Create Translation API.", e);
+		}
+		return details;
+	}
+	
+	private List<CategoryDetails> addSFCategoriesOperation(ContentDetails details, List<CategoryDetails> categoryList)
+	{
+		try
+		{
+			CategoryDetails catDetails = null;
+			JSONObject responseObject = null;
+			JSONObject payloadObj = null;
+			for(int a=0;a<categoryList.size();a++)
+			{
+				catDetails = (CategoryDetails)categoryList.get(a);
+				/*
+				 * ONLY WHEN KA REF KEY IS NOT NULL
+				 * AND SF ASSOCIATION ID IS NULL (E.G CATEGORY MAPPING HAS ALREADY HAPPENED)
+				 */
+				if((null!=catDetails.getRefKey() && !"".equals(catDetails.getRefKey())) && 
+						(null==catDetails.getSfCatAssociationId() || catDetails.getSfCatAssociationId().equals("")))
+				{
+					try
+					{
+						payloadObj = new JSONObject();
+						payloadObj.put("DataCategoryGroupName", "Product_and_Categories");
+						payloadObj.put("DataCategoryName", catDetails.getRefKey());
+						payloadObj.put("ParentId", details.getSfRecordId());
+						
+						/*
+						 * CALL CATEGORY CREATION ASSOICATION REST API
+						 */
+						responseObject = caller.callSFRestAPIForOtherOperations(categoryAPIURL,SalesForceConstants.METHOD_POST, payloadObj.toString());
+						if(null!=responseObject)
+						{
+							if(responseObject.getString("CALL_STATUS").equals("SUCCESS"))
+							{
+								logger.info("addSFCategoriesOperation :: Sales Force Category Mapping API Executed Successfully for "+ details.getDocumentId()+" of "+ details.getLocale()+". For Ref Key :: > "+ catDetails.getRefKey());
+								try
+								{
+									if(null!=responseObject.getJSONObject("FINAL_DATA").getString("id"))
+									{
+										catDetails.setSfCatAssociationId(responseObject.getJSONObject("FINAL_DATA").getString("id"));
+										// set Mapping Status as Success
+										catDetails.setSfMappingStatus("SUCCESS");
+									}
+								}
+								catch(Exception e)
+								{
+									Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "addSFCategoriesOperation()", e);
+									// capture error Message
+									catDetails = captureCategoryErrorMessage(catDetails, e);
+								}
+							}
+							else
+							{
+								logger.info("addSFCategoriesOperation :: Failed to execute Sales Force Category Mapping API for "+ details.getDocumentId()+" of "+ details.getLocale()+" for Ref Key :: >"+catDetails.getRefKey());
+								// capture error Message
+								try
+								{
+									if(null!=responseObject.getJSONArray("ERROR_DATA"))
+									{
+										// set processing Status as Failure
+										catDetails.setSfMappingStatus("FAILURE");
+										// set Error Message received from Sales Force API Call
+										catDetails.setErrorMessage(responseObject.getJSONArray("ERROR_DATA").toString());
+									}
+								}
+								catch(Exception e) 
+								{
+									Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "addSFCategoriesOperation()", e);
+									// set Error Message as Failed to read Error JSON Array from API Call
+									catDetails = captureCategoryErrorMessage(catDetails, e);
+								}
+							}
+						}
+					}
+					catch(Exception e)
+					{
+						Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "addSFCategoriesOperation()", e);
+						// capture errorMessage
+						catDetails = captureCategoryErrorMessage(catDetails, e);
+					}
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "addSFCategoriesOperation()", e);
+		}
+		return categoryList;
+	}
+
+	private CategoryDetails captureCategoryErrorMessage(CategoryDetails details, Exception e)
+	{
+		try
+		{
+			// set sfProcessingstatus to Failure
+			details.setSfMappingStatus("FAILURE");
+
+			// only when Exception is not NULL
+			if(null!=e)
+			{
+				writer = new StringWriter();
+				print = new PrintWriter(writer);
+				e.printStackTrace();
+
+				// set errorMessage
+				details.setErrorMessage(writer.toString());
+			}
+
+			// clear all printers & writers
+			if(null!=writer)
+			{
+				writer.flush();
+				writer.close();
+			}
+			writer = null;
+			if(null!=print)
+			{
+				print.flush();
+				print.close();
+			}
+			print=  null;
+		}
+		catch(Exception w)
+		{
+			Utilities.printStackTraceToLogs(StartMigrationImpl.class.getName(), "captureCategoryErrorMessage()", w);
+		}
+		return details;
+	}
+
+
+}

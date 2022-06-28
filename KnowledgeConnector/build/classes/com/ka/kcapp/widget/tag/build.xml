@@ -1,0 +1,20 @@
+<project name="KCWidgetTag" default="dist">
+    <property name="KC.root.dir"        location="../../../../../../"/>
+    <import file="KCWidgetTag.dependencies.xml"/>
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${KC.root.dir}/WebContent/WEB-INF/lib/ant-contrib-1.0b2.jar"/>
+        </classpath>
+    </taskdef>
+    
+    <target name="KCWidgetTag.buildJar">
+        <javac srcdir="." destdir="${KC.root.dir}/bin" classpathref="KCWidgetTag.build.dependencies" excludes="/tests/**" debug="${debug}" debuglevel="${debugLevel}"/>
+    </target>
+    
+    <target name="dist">
+        <antcall target="KCWidgetTag.buildJar">
+            <param name="debug" value="${debug}"/>
+            <param name="debugLevel" value="${debugLevel}"/>
+        </antcall>
+    </target>
+</project>

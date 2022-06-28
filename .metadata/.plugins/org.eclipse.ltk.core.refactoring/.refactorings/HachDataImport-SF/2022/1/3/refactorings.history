@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Rename resource &apos;HachDataImport-SF/src/com/hach/salesforce/queries/CONTENT_TABLE.sql&apos; to &apos;PUBLISH_TABLE.sql&apos;" description="Rename resource &apos;CONTENT_TABLE.sql&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="src/com/hach/salesforce/queries/CONTENT_TABLE.sql" name="PUBLISH_TABLE.sql" stamp="1641798514332" updateReferences="true"/>
+</session>

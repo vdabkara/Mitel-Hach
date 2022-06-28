@@ -1,0 +1,40 @@
+{
+	"useConnection":"miteltst",
+	
+	"mitelpro":
+	{
+		"kaConfigurationName":"kaimport",
+		"kaUsername":"scapi",
+		"kaPassword":"R3dMitel",
+		"accountUsername":"GKim",
+		"accountPassword":"Mitel123",
+		"sitename":"mitel__pro",
+		"kaLocale":"en_US",
+		
+		"cruderEndPointAddress":"https://mitel--pro.custhelp.com/cgi-bin/mitel__pro.cfg/services/soap",
+		"authenticationURL":"https://mitel--pro-irs.custhelp.com/km/api/latest/auth/integration/authorize",
+		"authorizationURL": "https://mitel--pro-irs.custhelp.com/km/api/latest/auth/authorize",
+		"apiURL":           "https://mitel--pro-irs.custhelp.com/km/api/latest",
+		
+
+		"OSvCapiURL":           "https://mitel--pro.custhelp.com/services/rest/connect/latest",
+	},
+
+	"miteltst":
+	{
+		"kaConfigurationName":"kaimport",
+		"kaUsername":"scapi",
+		"kaPassword":"R3dMitel",
+		"accountUsername":"GKim",
+		"accountPassword":"Mitel123",
+		"sitename":"mitel__tst1",
+		"kaLocale":"en_US",
+		
+		"cruderEndPointAddress":"https://mitel--tst1.custhelp.com/cgi-bin/mitel__tst1.cfg/services/soap",
+		"authenticationURL":"https://mitel--tst1-irs.custhelp.com/km/api/latest/auth/integration/authorize",
+		"authorizationURL": "https://mitel--tst1-irs.custhelp.com/km/api/latest/auth/authorize",
+		"apiURL":           "https://mitel--tst1-irs.custhelp.com/km/api/latest",
+
+		"OSvCapiURL":           "https://mitel--tst1.custhelp.com/services/rest/connect/latest",
+	}
+}

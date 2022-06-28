@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="org.eclipse.ui.texteditor.GotoLineAction$GotoLineDialog_dialogBounds">
+		<item value="452" key="DIALOG_X_ORIGIN"/>
+		<item value="248" key="DIALOG_Y_ORIGIN"/>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
+		<item value="false" key="isRegEx"/>
+		<item value="######## Starting Translation" key="selection"/>
+		<item value="false" key="casesensitive"/>
+		<item value="false" key="incremental"/>
+		<item value="true" key="wrap"/>
+		<item value="false" key="wholeword"/>
+		<list key="findhistory">
+			<item value="######## Starting Translation"/>
+			<item value="Payload :: &gt;"/>
+			<item value="documents.xml.dir.path"/>
+			<item value="26B971675061D7AC4EB438B461C3E10009C7B5E6777E64393A17410B82DABC06"/>
+			<item value="3MVG9SM6_sNwRXqtrZuOaVJboASihriwYsFOcaaY.lzDQDJVKpoW9xVm_PvGDSutxN7NJOf5o0Zh4zZPkb9tr"/>
+			<item value="3MVG9Fy_1ZngbXqNiAWlwfFG3LTMomyvqGUNI4oUmgZI0_6Sfyhu27g6JlhZzmJqLQeiv66CwJhcn4Vyp2hFy"/>
+			<item value="setallcat"/>
+			<item value="attachments.dir.path"/>
+			<item value="Manual_Links__c"/>
+			<item value="SF_DOCUMENT_ID"/>
+			<item value=".get(&quot;externalId&quot;));"/>
+			<item value="get(&quot;externalId&quot;)+&quot;$&quot;+&quot;$&quot;"/>
+			<item value="level1.get(&quot;externalId&quot;)"/>
+			<item value=".get(&quot;recordId&quot;)+&quot;$&quot;"/>
+			<item value="INTERFAC"/>
+		</list>
+		<list key="replacehistory">
+			<item value=".get(&quot;externalId&quot;)+&quot;$&quot;);"/>
+			<item value="get(&quot;externalId&quot;)+&quot;$&quot;"/>
+			<item value="level1.get(&quot;externalId&quot;)+&quot;$&quot;"/>
+			<item value=".get(&quot;recordId&quot;)"/>
+			<item value="en_US"/>
+			<item value="categoryList"/>
+			<item value="CategoryDetails"/>
+			<item value="getCategoryList"/>
+			<item value=""/>
+			<item value="documentsList"/>
+			<item value="documentList"/>
+			<item value="ContentDetails"/>
+			<item value="getDocumentsList"/>
+			<item value="readNodeValue"/>
+			<item value="callSFRestAPIForOtherOperations"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
+		<item value="284" key="DIALOG_WIDTH"/>
+		<item value="1|Segoe UI|9.0|0|WINDOWS|1|-12|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
+		<item value="391" key="DIALOG_HEIGHT"/>
+		<item value="953" key="DIALOG_X_ORIGIN"/>
+		<item value="131" key="DIALOG_Y_ORIGIN"/>
+	</section>
+</section>

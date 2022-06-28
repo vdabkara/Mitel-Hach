@@ -1,0 +1,19 @@
+<project>
+	<path id="KCController.build.dependencies">
+		<fileset dir="${KC.root.dir}/WebContent/WEB-INF/lib">
+			<include name="apache-log4j-extras-1.1.jar"/>
+			<include name="commons-codec-1.6.jar"/>
+			<include name="commons-lang3-3.4.jar"/>
+			<include name="commons-logging-1.1.1.jar"/>
+			<include name="freemarker-gae-2.3.20.jar"/>
+			<include name="httpclient-4.5.jar"/>
+			<include name="httpcore-4.4.1.jar"/>
+			<include name="jsonorg-2.0.jar"/>
+			<include name="log4j-core.jar"/>
+			<include name="j2ee-1.4.jar"/>
+		</fileset>
+		<dirset dir="${KC.root.dir}/bin/com/ka/kcapp/">
+			<include name="util controller widget"/>
+		</dirset>
+    </path>
+</project>

@@ -1,0 +1,25 @@
+<!--
+ Copyright (c) 2015, Oracle Corporation and/or its affiliates. All rights reserved.
+
+ The sample code in this document or accessed through this document is not certified or
+ supported by Oracle. It is intended for educational or testing purposes only. Use of this
+ sample code implies acceptance of the License Agreement
+ (http://www.oracle.com/technetwork/licenses/standard-license-152015.html).
+
+ File: view.html
+ Abstract: Partial page to render the pagination links
+ Version: 1.0
+-->
+
+<ul>
+    <% if (currentPage > 0) { %>
+        <li class="PreviousPage">
+            <a href="#" data-rel="previous" oncontextmenu="return false;" rel="previous" id="previous_<%=widgetInstanceId%>"><span id="previous"><%=labelPrevious%></span></a>
+        </li>
+    <% } %>
+    <% if (pageMore != 0) { %>
+        <li class="NextPage"> 
+            <a href="#" data-rel="next" oncontextmenu="return false;" rel="next" id="next_<%=widgetInstanceId%>"><span id="next"><%=labelNext%></span></a>
+        </li>
+    <% } %>
+</ul>

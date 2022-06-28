@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+ Copyright (c) 2015, Oracle Corporation and/or its affiliates. All rights reserved.
+
+ The sample code in this document or accessed through this document is not certified or
+ supported by Oracle. It is intended for educational or testing purposes only. Use of this
+ sample code implies acceptance of the License Agreement
+ (http://www.oracle.com/technetwork/licenses/standard-license-152015.html).
+
+ File: web.xml
+ Abstract: Deployment Descriptor for Knowledge Connector
+ Version: 1.0
+-->
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
+  <display-name>KnowledgeConnector</display-name>
+  <listener>
+    <listener-class>com.ka.kcapp.listner.ContextListner</listener-class>
+  </listener>
+  <context-param>
+    <param-name>log4j-config-location</param-name>
+    <param-value>WEB-INF/log4j.properties</param-value>
+  </context-param>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+  <filter>
+    <filter-name>KCAuthenticationFilter</filter-name>
+    <filter-class>com.ka.kcapp.filter.KCAuthenticationFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>KCAuthenticationFilter</filter-name>
+    <url-pattern>/jsp/default.jsp</url-pattern>
+  </filter-mapping>
+  <servlet>
+    <servlet-name>searchAjaxController</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.SearchAPIController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>searchAjaxController</servlet-name>
+    <url-pattern>/makeSearchRequest</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>searchAjaxController</servlet-name>
+    <url-pattern>/makeRequest</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>LinkUnlinkAjaxController</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.LinkUnlinkController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LinkUnlinkAjaxController</servlet-name>
+    <url-pattern>/kmRequest</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>authenticator</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.AccountAuthenticate</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>authenticator</servlet-name>
+    <url-pattern>/auth</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>ContentService</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.ContentServiceController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ContentService</servlet-name>
+    <url-pattern>/contentService</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <servlet-name>ContentRequest</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.ContentRequestController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ContentRequest</servlet-name>
+    <url-pattern>/contentRequest</url-pattern>
+  </servlet-mapping>
+  <error-page>
+    <error-code>404</error-code>
+    <location>/jsp/error.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>500</error-code>
+    <location>/jsp/error.jsp</location>
+  </error-page>
+  <servlet>
+    <description></description>
+    <display-name>ContentRecommendController</display-name>
+    <servlet-name>ContentRecommendController</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.ContentRecommendController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ContentRecommendController</servlet-name>
+    <url-pattern>/recommendContent</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>RecommendChangeController</display-name>
+    <servlet-name>RecommendChangeController</servlet-name>
+    <servlet-class>com.ka.kcapp.controller.RecommendChangeController</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>RecommendChangeController</servlet-name>
+    <url-pattern>/recommendChange</url-pattern>
+  </servlet-mapping>
+</web-app>

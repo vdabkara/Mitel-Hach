@@ -1,0 +1,31 @@
+###################################
+#########--- JDBC Properties ---###
+###################################
+#- MY SQL
+jdbc.driverClassName=com.mysql.cj.jdbc.Driver
+jdbc.databaseurl=jdbc:mysql://127.0.0.1:3307/hach_prod_service_max
+jdbc.databaseUserName=root
+jdbc.databasePassword=welcome1234
+jdbc.schemaName=hach_prod_service_max
+
+###################################
+#########--- REST Properties ---###
+###################################
+sitename=hachcompany
+contentsitename=hachcompany
+kaLocale=pt_PT
+kaApiUsername=test_api_user
+kaApiPassword=Hach123
+accountUsername=ankitj
+accountPassword=Hach123
+
+
+authenticationURL=https://hachcompany-irs.custhelp.com/km/api/latest/auth/integration/authorize
+authorizationURL=https://hachcompany-irs.custhelp.com/km/api/latest/auth/authorize
+apiURL=https://hachcompany-irs.custhelp.com/km/api/latest
+OSvCapiURL=https://hachcompany.custhelp.com/services/rest/connect/latest
+
+
+attachments.dir.path=D:/HACH_WD/PROD_DELTA_29_MAY_2022/ATTACHMENTS/
+documents.xml.dir.path=D:/HACH_WD/Documents/XML/
+attachments.inline.images.dir.path=D:/HACH_WD/PROD_DELTA_29_MAY_2022/INLINE_IMAGES/

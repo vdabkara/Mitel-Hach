@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.1/jquery.js"></script>
+  <script type="text/javascript" src="http://cdn.tinymce.com/4/tinymce.min.js"></script>
+    
+  
+
+  <style type="text/css">
+    h1 {
+  background: #40526b;
+  color: #FFF;
+  height: 1.25em;
+  margin: 0;
+  padding: 0.25em;
+  text-align: center;
+}
+
+h3 {
+  background-color: #c7c7c7;
+  font-size: 1.5em;
+  margin: 0;
+  padding: 0.25em;
+  height: 1.25em;
+  color: black;
+  text-align: center;
+}
+
+table {
+  display: inline;
+  line-height: 1.5em;
+  margin: 1em;
+  width: 50%;
+}
+
+iframe {
+  height: 800px;
+  width: 100%;
+  overflow: auto;
+  resize: both;
+  align:center;
+}
+
+/*textarea {
+  float: right;
+  display: inline;
+  width: 100%;
+}*/
+
+hr { 
+   height: 3px;
+	color: #f00;
+	background-color: #f00;    
+}
+
+  </style>
+  <title>Knowledge Connector Application</title>  
+</head>
+
+<body>
+  <h1>Incident Management - Test</h1>
+<h3>Incident Request</h3>
+
+<table class="Case Details">
+  <tr>
+    <td>Incident ID: </td>
+    <td>
+      <input class="CaseID" type="text" value="160408-000086" />
+    </td>
+  </tr>
+  <tr>
+    <td>Description: </td>
+    <!-- <td>
+      <input class="CaseDesc" type="text" value="how to convert a harddisk" />
+			</td> -->
+	<td><textarea class="CaseDesc" name = "case_desc" rows="3" cols="30" maxlength="255" onfocus="this.value='';" style="width: 359px; height: 81px; ">Enter Case description.. </textarea>		
+	</td>				
+  </tr>
+  <tr> <td> </td><td> </td></tr>
+  <!-- <tr>
+    <td>Login : </td>
+    <td><input class="username" type="text"
+				value="Enter your login..." onfocus="this.value='';"/>    
+    </td>
+ 
+  </tr> -->
+    <tr>
+    <td>Application Source : </td>
+    <td><select class="source" name="source">
+    	<option value="">Select..</option>
+  		<option value="REMEDY">Remedy</option>
+  		<option value="TEAMTRACK">TeamTrack</option>
+		</select>
+        
+    </td>
+ 
+  </tr>
+<!-- <tr>
+    <td>Password : </td>
+	<td><input class="password" type="password"
+				value=""  onfocus="this.value='';"/>    
+    </td>    
+  </tr>   -->
+<tr><td>&nbsp; </td> 
+<td>
+<button class="KnowledgeConnectorLauncher">
+  Invoke Knowledge </td>
+</button>
+  </tr>  
+</table>
+<!-- button class="SaveIncident">
+Save this Incident
+</button>
+<button class="KnowledgeConnectorLauncher">
+  Launch Knowledge
+</button> -->
+ <div> &nbsp; </div><hr>
+ 
+<div class="framePlaceHolder">
+</div>
+
+<script type='text/javascript'>
+
+var frameDiv = $(".framePlaceHolder");
+var launchButton = $(".KnowledgeConnectorLauncher");
+var CaseActivityBox = $(".CaseActivity");
+var saveIncidentButton = $(".SaveIncident");
+//tinymce.init({ selector:'textarea' });
+launchButton.click(function() {
+  frameDiv.empty();
+  //alert("username " +$(".username").val() );
+  //alert("desc " +$(".CaseDesc").val() );
+  //alert("source " +$(".source").val() );
+  //var frameURL = "http://localhost:7001/KnowledgeConnector/jsp/default.jsp?kw=" + encodeURIComponent($(".CaseDesc").val()) + "&incidentID=" + $(".CaseID").val()  + "&username=" + $(".username").val() + "&password=" + $(".password").val()+ "&source=" + $(".source").val();
+   var frameURL = "http://localhost:7001/KnowledgeConnector/jsp/default.jsp?kw=" + encodeURIComponent($(".CaseDesc").val()) + "&incidentID=" + $(".CaseID").val()  + "&source=" + $(".source").val();
+  //alert("Search url " + frameURL);
+  frameDiv.append("<iframe class=\"knowledgeFrame\" src=\"" + frameURL + "\"/>");
+});
+saveIncidentButton.click(function() {
+	var knowledgeFrame = document.getElementsByClassName("knowledgeFrame").item(0).contentWindow;
+  var data ="saveCase";
+  var targetOrigin = "*";
+  knowledgeFrame.postMessage(data, targetOrigin);
+});
+$(window).on("message", function(e) {
+    var data = e.originalEvent.data;
+    if(data.action == "addLink"){
+    	var text = "<a href=\"" + data.href + "\">" + data.title + "</a>";
+    } else if(data.action == "addText") {
+      var text = data.html;
+    }
+    $(tinyMCE.activeEditor.getBody()).append(text + "<br>");
+});
+
+</script>
+
+</body>
+
+</html>
+

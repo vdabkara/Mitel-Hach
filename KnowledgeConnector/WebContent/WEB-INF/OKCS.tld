@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib>
+<tlibversion>1.0</tlibversion>
+<jspversion>1.1</jspversion>
+<shortname>OKCS_REST_API_TAGLIB</shortname>
+<info>Taglib to display widgets</info>
+
+<tag>
+    <name>channel</name>
+    <tagclass>com.ka.kcapp.widget.tag.ChannelDataTag</tagclass>
+    <info>Channel Widget</info>
+    <attribute>
+      <name>dataset</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>channel</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>defaultChannel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>locale</name>
+      <required>false</required>
+	</attribute>
+</tag>
+
+<tag>
+    <name>category</name>
+    <tagclass>com.ka.kcapp.widget.tag.CategoryTag</tagclass>
+    <info>Category Widget</info>
+    <attribute>
+      <name>dataset</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>channel</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>defaultChannel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>locale</name>
+      <required>false</required>
+	</attribute>
+</tag>
+
+<tag>
+    <name>searchText</name>
+    <tagclass>com.ka.kcapp.widget.tag.SearchTextTag</tagclass>
+    <info>Search Widget</info>    
+    <attribute>
+      <name>searchText</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>inputLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>placeHolderLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>initialFocus</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>startOverLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>contributeContentLabel</name>
+      <required>false</required>
+	</attribute>	
+	<attribute>
+      <name>recommendNewArticleLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+	</attribute>
+</tag>
+
+<tag>
+    <name>searchButton</name>
+    <tagclass>com.ka.kcapp.widget.tag.SearchButtonTag</tagclass>
+    <info>Search Button</info>
+    <attribute>
+      <name>buttonLabel</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+    <name>pagination</name>
+    <tagclass>com.ka.kcapp.widget.tag.PaginationTag</tagclass>
+    <info>Pagination</info>
+    <attribute>
+      <name>searchText</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>labelNext</name>
+      <required>false</required>
+	</attribute>
+	
+	<attribute>
+      <name>labelPrevious</name>
+      <required>false</required>
+	</attribute>
+	
+	<attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>clientSideTemplate</name>
+      <required>false</required>
+	</attribute> 
+</tag>
+
+<tag>
+    <name>facet</name>
+    <tagclass>com.ka.kcapp.widget.tag.FacetTag</tagclass>
+    <info>Facet Widget</info>
+    <attribute>
+      <name>maxSubFacetSize</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>titleLabel</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>clearFilterLabel</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>clearFilterScreenReaderLabel</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>moreFilterLabel</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>moreScreenReaderLabel</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>activeFilterScreenreaderLabel</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>searchText</name>
+      <required>false</required>
+    </attribute>	
+	<attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>clientSideTemplate</name>
+      <required>false</required>
+	</attribute>
+</tag>
+
+<tag>
+    <name>searchResult</name>
+    <tagclass>com.ka.kcapp.widget.tag.ResultTag</tagclass>
+    <info>Result Widget</info>
+    <attribute>
+      <name>hideWhenNoResults</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>labelNoResults</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>labelResults</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>searchText</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>target</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>truncateSize</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>clientSideTemplate</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+	  <name>showCaseLinks</name>
+	  <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+	<attribute>
+	  <name>showAddLink</name>
+	  <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+	<attribute>
+	  <name>showAddText</name>
+	  <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+</tag>
+
+<tag>
+    <name>answerList</name>
+    <tagclass>com.ka.kcapp.widget.tag.AnswerListTag</tagclass>
+    <info>AnswerList Widget</info>
+    <attribute>
+      <name>dataset</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>channel</name>
+      <required>true</required>
+	</attribute>
+    <attribute>
+      <name>category</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>type</name>
+      <required>true</required>
+	</attribute>
+	<attribute>
+      <name>locale</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>SortBy</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>sortDirection</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>draft</name>
+      <required>false</required>
+	</attribute>
+</tag>
+
+<tag>
+    <name>answerView</name>
+    <tagclass>com.ka.kcapp.widget.tag.AnswerViewTag</tagclass>
+    <info>Answer View Tag</info>
+    <attribute>
+      <name>showCaseLinks</name>
+      <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+	<attribute>
+      <name>showAddLink</name>
+      <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+	<attribute>
+      <name>showAddText</name>
+      <required>false</required>
+	  <type>boolean</type>
+	</attribute>
+	<attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+    <name>contentRecommendation</name>
+    <tagclass>com.ka.kcapp.widget.tag.ContentRecommendationTag</tagclass>
+    <info>Answer View Tag</info>
+</tag>
+
+<tag>
+    <name>login</name>
+    <tagclass>com.ka.kcapp.widget.tag.LoginTag</tagclass>
+    <info>Login Tag</info>
+    <attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+	</attribute>
+    <attribute>
+      <name>clientSideTemplate</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+	</attribute>
+</tag>
+
+<tag>
+    <name>linkList</name>
+    <tagclass>com.ka.kcapp.widget.tag.LinkListingTag</tagclass>
+    <info>Link Listing Widget</info>
+    <attribute>
+      <name>incidentId</name>
+      <required>false</required>
+    </attribute>
+</tag>
+
+<tag>
+    <name>contributeContent</name>
+    <tagclass>com.ka.kcapp.widget.tag.ContributeContentTag</tagclass>
+    <info>Contribute Content Widget</info>
+    <attribute>
+      <name>incidentId</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>contentTypeSelected</name>
+      <required>false</required>
+    </attribute>
+    
+</tag>
+<tag>
+    <name>navigation</name>
+    <tagclass>com.ka.kcapp.widget.tag.NavigationTag</tagclass>
+    <info>Navigation Widget</info>
+    <attribute>
+      <name>show</name>
+      <required>false</required>
+    </attribute>
+    <attribute>
+      <name>refreshForCurrent</name>
+      <required>false</required>
+    </attribute>
+</tag>
+
+<tag>
+    <name>recommendContent</name>
+    <tagclass>com.ka.kcapp.widget.tag.RecommendContentTag</tagclass>
+    <info>Recommend Content Widget</info>    
+    <attribute>
+      <name>submitButtonLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>cancelButtonLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>submittingMessageLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>recommendContentLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>titleLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>detailsLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>caseNumberLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>priorityLabel</name>
+      <required>false</required>
+	</attribute>
+	<attribute>
+      <name>selectPriorityLabel</name>
+      <required>false</required>
+	</attribute>
+	 <attribute>
+      <name>prioritySelected</name>
+      <required>false</required>
+    </attribute>
+	<attribute>
+      <name>serverSideTemplate</name>
+      <required>false</required>
+	</attribute>
+</tag>
+</taglib> 

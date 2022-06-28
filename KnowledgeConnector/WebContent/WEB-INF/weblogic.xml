@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+ Copyright (c) 2015, Oracle Corporation and/or its affiliates. All rights reserved.
+
+ The sample code in this document or accessed through this document is not certified or
+ supported by Oracle. It is intended for educational or testing purposes only. Use of this
+ sample code implies acceptance of the License Agreement
+ (http://www.oracle.com/technetwork/licenses/standard-license-152015.html).
+
+ File: weblogic.xml
+ Abstract: Deployment Descriptor for Knowledge Connectors specific to weblogic
+ Version: 1.0
+-->
+<wls:weblogic-web-app xmlns:wls="http://xmlns.oracle.com/weblogic/weblogic-web-app" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd http://xmlns.oracle.com/weblogic/weblogic-web-app http://xmlns.oracle.com/weblogic/weblogic-web-app/1.3/weblogic-web-app.xsd">
+    <wls:weblogic-version>10.3.6</wls:weblogic-version>
+    <wls:context-root>KnowledgeConnector</wls:context-root>
+</wls:weblogic-web-app>
